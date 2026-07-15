@@ -3,207 +3,117 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Kimbal FFR Intelligence end-to-end data, process, module and system blueprint." />
-  <title>Kimbal FFR Intelligence — System Blueprint</title>
+  <meta name="description" content="Kimbal FFR Intelligence data-to-RCA system architecture and module blueprint." />
+  <title>Kimbal FFR Intelligence — Data-to-RCA Blueprint</title>
   <style>
-    :root { --blue:#087ef5; --navy:#071d35; --ink:#12263a; --muted:#5d7184; --line:#dce6ef; --soft:#f4f8fc; --teal:#087f77; --amber:#a56200; --red:#b73535; --indigo:#5245a8; }
-    * { box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
-    body { margin:0; color:var(--ink); background:#fff; font-family:Inter,"Segoe UI",Arial,sans-serif; font-size:14px; line-height:1.5; }
-    a { color:inherit; }
-    .topbar { position:sticky; top:0; z-index:20; height:66px; display:flex; align-items:center; gap:28px; padding:0 4vw; border-bottom:1px solid var(--line); background:rgba(255,255,255,.97); }
-    .brand { display:flex; align-items:center; gap:10px; color:var(--blue); text-decoration:none; font-size:24px; }
-    .brand-mark { width:28px; height:28px; display:grid; place-items:center; border:2px solid currentColor; border-radius:50%; font-size:15px; }
-    nav { display:flex; gap:22px; margin-left:auto; }
-    nav a { color:#52677a; text-decoration:none; font-size:12px; font-weight:650; }
-    nav a:hover { color:var(--blue); }
-    .demo { padding:7px 10px; border-radius:4px; background:#eaf4ff; color:var(--blue); font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
-    main { width:min(1440px,92vw); margin:auto; }
-    section { padding:74px 0; border-bottom:1px solid var(--line); }
-    .hero { display:grid; grid-template-columns:1.25fr .75fr; gap:60px; padding-top:86px; }
-    .eyebrow { display:block; margin-bottom:16px; color:var(--blue); font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
-    h1 { max-width:900px; margin:0; color:var(--blue); font-size:clamp(48px,7vw,92px); font-weight:300; letter-spacing:-.05em; line-height:.95; }
-    h1 span { display:block; color:var(--navy); }
-    .hero p { max-width:820px; margin:28px 0 0; color:var(--muted); font-size:20px; line-height:1.55; }
-    .hero-aside { align-self:end; border-left:3px solid var(--blue); padding:18px 0 18px 24px; }
-    .hero-aside strong { display:block; margin-bottom:8px; color:var(--navy); font-size:18px; }
-    .hero-aside p { margin:0; font-size:13px; }
-    .section-head { display:grid; grid-template-columns:260px 1fr; gap:40px; margin-bottom:34px; }
-    .section-head h2 { margin:0; color:var(--navy); font-size:34px; font-weight:450; letter-spacing:-.025em; }
-    .section-head p { max-width:800px; margin:12px 0 0; color:var(--muted); }
-    .system-sentence { display:grid; grid-template-columns:repeat(6,1fr); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
-    .system-sentence div { min-height:132px; padding:20px; border-right:1px solid var(--line); background:#fff; }
-    .system-sentence div:last-child { border:0; }
-    .system-sentence span { color:var(--blue); font-size:10px; font-weight:800; letter-spacing:.1em; }
-    .system-sentence strong { display:block; margin:14px 0 6px; color:var(--navy); font-size:16px; }
-    .system-sentence small { color:var(--muted); }
-    .tint { width:100vw; margin-left:calc(50% - 50vw); padding-left:4vw; padding-right:4vw; background:var(--soft); }
-    .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:#fff; }
-    table { width:100%; border-collapse:collapse; min-width:1050px; }
-    th { padding:13px 14px; background:var(--navy); color:#fff; font-size:10px; letter-spacing:.08em; text-align:left; text-transform:uppercase; }
-    td { padding:15px 14px; border-top:1px solid var(--line); vertical-align:top; font-size:12px; }
-    tbody tr:hover { background:#f7fbff; }
-    td:first-child strong { display:block; color:var(--blue); font-size:14px; }
-    td small { display:block; margin-top:4px; color:var(--muted); }
-    .later { display:inline-block; margin-top:6px; padding:3px 6px; border-radius:3px; background:#fff2d8; color:var(--amber); font-size:9px; font-weight:800; text-transform:uppercase; }
-    .flow { display:grid; gap:12px; }
-    .flow-row { display:grid; grid-template-columns:70px 180px 1.2fr 1fr 1fr; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
-    .flow-row > div { padding:16px; border-left:1px solid var(--line); }
-    .flow-row > div:first-child { display:grid; place-items:center; border:0; background:var(--navy); color:#fff; font-size:20px; font-weight:300; }
-    .flow-row h3 { margin:0 0 5px; color:var(--blue); font-size:15px; }
-    .flow-row p { margin:0; color:var(--muted); font-size:11px; }
-    .label { display:block; margin-bottom:5px; color:#6c8294; font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
-    .gate { color:var(--red)!important; font-weight:700; }
-    .modules { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
-    details { border:1px solid var(--line); border-radius:8px; background:#fff; }
-    summary { display:flex; align-items:center; gap:14px; padding:18px; cursor:pointer; list-style:none; }
-    summary::-webkit-details-marker { display:none; }
-    summary b { width:34px; height:34px; display:grid; place-items:center; flex:none; border-radius:4px; background:#eaf4ff; color:var(--blue); }
-    summary strong { color:var(--navy); font-size:15px; }
-    summary span { margin-left:auto; color:var(--muted); font-size:11px; }
-    .module-body { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; margin:0 18px 18px; border:1px solid var(--line); background:var(--line); }
-    .module-body div { padding:13px; background:#fff; font-size:11px; }
-    .module-body strong { display:block; margin-bottom:5px; color:var(--blue); font-size:10px; text-transform:uppercase; }
-    .cases { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-    .case { padding:18px; border:1px solid var(--line); border-top:4px solid var(--blue); border-radius:6px; background:#fff; }
-    .case.exception { border-top-color:var(--amber); }
-    .case.blocked { border-top-color:var(--red); }
-    .case h3 { margin:0 0 8px; color:var(--navy); font-size:14px; }
-    .case p { margin:0; color:var(--muted); font-size:11px; }
-    .case b { display:block; margin-top:12px; color:var(--blue); font-size:10px; }
-    .trace { display:grid; grid-template-columns:repeat(7,1fr); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
-    .trace div { min-height:155px; padding:16px; border-right:1px solid var(--line); }
-    .trace div:last-child { border:0; }
-    .trace span { color:var(--blue); font-size:10px; font-weight:800; }
-    .trace strong { display:block; margin:10px 0 6px; color:var(--navy); font-size:13px; }
-    .trace p { margin:0; color:var(--muted); font-size:10px; }
-    .closure { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-    .closure article { padding:22px; border:1px solid var(--line); border-radius:8px; background:#fff; }
-    .closure h3 { margin:0 0 8px; color:var(--blue); font-size:16px; }
-    .closure p { margin:0; color:var(--muted); font-size:11px; }
-    .note { margin-top:22px; padding:18px; border-left:4px solid var(--amber); background:#fff9ed; color:#76501a; font-size:12px; }
-    footer { display:flex; justify-content:space-between; padding:28px 4vw; background:var(--navy); color:#b8c7d4; font-size:11px; }
-    @media (max-width:1000px) { nav{display:none}.hero,.section-head{grid-template-columns:1fr}.system-sentence{grid-template-columns:repeat(3,1fr)}.flow-row{grid-template-columns:52px 150px 1fr}.flow-row>div:nth-child(4),.flow-row>div:nth-child(5){grid-column:3}.cases{grid-template-columns:repeat(2,1fr)}.trace{grid-template-columns:repeat(2,1fr)}.trace div{border-bottom:1px solid var(--line)} }
-    @media (max-width:650px) { main{width:92vw}.topbar{padding:0 4vw}.demo{display:none}.hero{padding-top:55px}.system-sentence,.modules,.cases,.closure,.trace{grid-template-columns:1fr}.flow-row{grid-template-columns:44px 1fr}.flow-row>div:nth-child(n+3){grid-column:2}.module-body{grid-template-columns:1fr}footer{display:grid;gap:8px} }
-    @media print { .topbar{position:static}.demo{display:none}section{break-inside:avoid;padding:36px 0}.tint{width:auto;margin:0;padding-left:0;padding-right:0}.table-wrap{overflow:visible}table{min-width:0;font-size:9px} }
+    :root {
+      --color-brand:#087ef5; --color-brand-soft:#eaf4ff; --color-navy:#08213a; --color-ink:#172b3d;
+      --color-muted:#607487; --color-border:#d8e3ed; --color-canvas:#f5f8fb; --color-white:#fff;
+      --color-vision:#6d47b8; --color-data:#087f77; --color-test:#b46800; --color-alert:#b53c3c;
+      --space-1:.4rem; --space-2:.7rem; --space-3:1rem; --space-4:1.5rem; --space-5:2rem; --space-6:3rem; --space-7:4.5rem;
+      --radius-sm:.4rem; --radius-md:.75rem; --radius-lg:1rem; --shadow:0 12px 32px rgba(24,62,97,.08);
+      --text-xs:clamp(.68rem,.64rem + .1vw,.76rem); --text-sm:clamp(.78rem,.74rem + .1vw,.86rem);
+      --text-md:clamp(.95rem,.88rem + .18vw,1.08rem); --text-lg:clamp(1.25rem,1.08rem + .5vw,1.65rem);
+      --text-xl:clamp(2rem,1.55rem + 1.45vw,3.3rem); --text-hero:clamp(3rem,2rem + 4vw,7rem);
+      --container:min(94vw,1440px);
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:var(--color-white);color:var(--color-ink);font:400 var(--text-sm)/1.55 Inter,"Segoe UI",Arial,sans-serif}
+    a{color:inherit}.shell{width:var(--container);margin-inline:auto}.topbar{position:sticky;top:0;z-index:20;border-bottom:1px solid var(--color-border);background:rgba(255,255,255,.97)}
+    .topbar .shell{min-height:4.25rem;display:flex;align-items:center;gap:var(--space-5)}.brand{display:flex;align-items:center;gap:.65rem;color:var(--color-brand);text-decoration:none;font-size:1.45rem}.mark{width:1.8rem;height:1.8rem;display:grid;place-items:center;border:2px solid currentColor;border-radius:50%;font-size:.75rem;font-weight:800}
+    nav{display:flex;gap:var(--space-5);margin-left:auto}nav a{color:var(--color-muted);font-size:var(--text-xs);font-weight:700;text-decoration:none}nav a:hover{color:var(--color-brand)}.badge{padding:.38rem .55rem;border-radius:var(--radius-sm);background:var(--color-brand-soft);color:var(--color-brand);font-size:.62rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+    section{padding-block:var(--space-7);border-bottom:1px solid var(--color-border)}.hero{padding-top:clamp(4.5rem,8vw,8rem)}.eyebrow{display:block;margin-bottom:var(--space-3);color:var(--color-brand);font-size:var(--text-xs);font-weight:850;letter-spacing:.12em;text-transform:uppercase}
+    h1{max-width:1100px;margin:0;color:var(--color-brand);font-size:var(--text-hero);font-weight:300;letter-spacing:-.055em;line-height:.92}h1 span{display:block;color:var(--color-navy)}.hero p{max-width:900px;margin:var(--space-5) 0 0;color:var(--color-muted);font-size:var(--text-lg)}
+    .hero-rule{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:var(--space-6);border:1px solid var(--color-border);background:var(--color-border);border-radius:var(--radius-md);overflow:hidden}.hero-rule div{padding:var(--space-4);background:var(--color-white)}.hero-rule strong{display:block;color:var(--color-navy);font-size:var(--text-md)}.hero-rule span{color:var(--color-muted);font-size:var(--text-xs)}
+    .section-head{display:grid;grid-template-columns:minmax(180px,260px) 1fr;gap:var(--space-6);margin-bottom:var(--space-5)}.section-head h2{margin:0;color:var(--color-navy);font-size:var(--text-xl);font-weight:440;letter-spacing:-.03em}.section-head p{max-width:900px;margin:.65rem 0 0;color:var(--color-muted);font-size:var(--text-md)}
+    .architecture{display:grid;grid-template-columns:1fr 44px 1.2fr 44px 1fr;align-items:stretch}.arch-col{display:grid;gap:var(--space-2)}.arch-title{padding:.7rem 1rem;border-radius:var(--radius-sm);background:var(--color-navy);color:#fff;font-size:var(--text-xs);font-weight:800;letter-spacing:.08em;text-transform:uppercase}.arch-card{padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:#fff}.arch-card strong{display:block;color:var(--color-navy)}.arch-card small{color:var(--color-muted)}.arch-core{padding:var(--space-4);border:2px solid var(--color-brand);border-radius:var(--radius-lg);background:var(--color-brand-soft)}.arch-core h3{margin:0 0 var(--space-3);color:var(--color-brand);font-size:var(--text-lg)}.arch-core ol{margin:0;padding-left:1.3rem}.arch-core li{margin:.45rem 0}.arch-arrow{display:grid;place-items:center;color:var(--color-brand);font-size:1.5rem}
+    .tint{width:100%;background:var(--color-canvas)}.table-wrap{overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md);background:#fff;box-shadow:var(--shadow)}table{width:100%;min-width:1080px;border-collapse:collapse}th{padding:.8rem 1rem;background:var(--color-navy);color:#fff;font-size:.66rem;letter-spacing:.08em;text-align:left;text-transform:uppercase}td{padding:1rem;border-top:1px solid var(--color-border);vertical-align:top;font-size:var(--text-xs)}td:first-child{width:16%}td strong{color:var(--color-navy)}td small{display:block;margin-top:.25rem;color:var(--color-muted)}tbody tr:hover{background:#f8fbfe}.pill{display:inline-block;margin-top:.4rem;padding:.2rem .45rem;border-radius:99px;background:#fff1d8;color:#935800;font-size:.6rem;font-weight:850;text-transform:uppercase}
+    .pipeline{display:grid;gap:var(--space-3)}.module{display:grid;grid-template-columns:64px minmax(160px,.7fr) 1fr 1fr 1fr;border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden;background:#fff}.module>div{padding:var(--space-3);border-left:1px solid var(--color-border)}.module .num{display:grid;place-items:center;border:0;background:var(--color-navy);color:#fff;font-size:1.4rem;font-weight:300}.module h3{margin:0;color:var(--color-brand);font-size:var(--text-md)}.module p{margin:.3rem 0 0;color:var(--color-muted);font-size:var(--text-xs)}.field-label{display:block;margin-bottom:.35rem;color:#6c8192;font-size:.62rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.module-output{background:#f8fbfe}
+    .rca-stage{padding:var(--space-5);border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-navy);color:#fff}.rca-stage>h3{margin:0 0 var(--space-4);font-size:var(--text-lg);font-weight:500}.engines{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3)}.engine{padding:var(--space-4);border-radius:var(--radius-md);background:#fff;color:var(--color-ink)}.engine.vision{border-top:5px solid var(--color-vision)}.engine.data{border-top:5px solid var(--color-data)}.engine.test{border-top:5px solid var(--color-test)}.engine b{display:block;font-size:var(--text-md)}.engine p{margin:.4rem 0;color:var(--color-muted);font-size:var(--text-xs)}.engine ul{margin:.8rem 0 0;padding-left:1.1rem;font-size:var(--text-xs)}
+    .fusion{display:grid;grid-template-columns:1fr 70px 1.15fr;align-items:stretch;margin-top:var(--space-4)}.fusion-input{display:grid;gap:.5rem}.fusion-input div{padding:.65rem .8rem;border:1px solid rgba(255,255,255,.25);border-radius:var(--radius-sm);font-size:var(--text-xs)}.fusion-arrow{display:grid;place-items:center;color:#7dbdff;font-size:1.7rem}.reasoner{padding:var(--space-4);border-radius:var(--radius-md);background:#102f50}.reasoner h4{margin:0;color:#7dbdff;font-size:var(--text-md)}.reasoner ol{margin:.8rem 0 0;padding-left:1.15rem;font-size:var(--text-xs)}
+    .rca-output{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-top:var(--space-4)}.rca-output article{padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-md);background:#fff}.rca-output h4{margin:0;color:var(--color-brand)}.rca-output p{margin:.4rem 0 0;color:var(--color-muted);font-size:var(--text-xs)}
+    .causal{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:var(--space-4)}.causal span{padding:.5rem .65rem;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:#fff;color:var(--color-navy);font-size:var(--text-xs)}.causal i{align-self:center;color:var(--color-brand);font-style:normal}
+    .close-loop{display:grid;grid-template-columns:1fr 48px 1fr 48px 1fr;align-items:stretch}.loop-card{padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:#fff}.loop-card h3{margin:0;color:var(--color-brand);font-size:var(--text-md)}.loop-card ul{margin:.8rem 0 0;padding-left:1.1rem;color:var(--color-muted);font-size:var(--text-xs)}.loop-arrow{display:grid;place-items:center;color:var(--color-brand);font-size:1.5rem}.future{margin-top:var(--space-5);padding:var(--space-4);border-left:4px solid var(--color-test);background:#fff8eb;color:#704b15}.future strong{display:block;margin-bottom:.35rem}
+    footer{padding:var(--space-5) 0;background:var(--color-navy);color:#b9c8d5}.footer-row{display:flex;justify-content:space-between;gap:var(--space-4);font-size:var(--text-xs)}
+    @media(max-width:1050px){nav{display:none}.architecture{grid-template-columns:1fr}.arch-arrow{min-height:44px;transform:rotate(90deg)}.module{grid-template-columns:54px 1fr 1fr}.module>div:nth-child(4),.module>div:nth-child(5){grid-column:2/-1}.engines,.rca-output{grid-template-columns:repeat(2,1fr)}.close-loop{grid-template-columns:1fr}.loop-arrow{min-height:42px;transform:rotate(90deg)}}
+    @media(max-width:680px){:root{--container:min(92vw,1440px);--space-7:3rem}.badge{display:none}.section-head{grid-template-columns:1fr;gap:.5rem}.hero-rule,.engines,.rca-output{grid-template-columns:1fr}.module{grid-template-columns:42px 1fr}.module>div:nth-child(n+3){grid-column:2}.fusion{grid-template-columns:1fr}.fusion-arrow{min-height:44px;transform:rotate(90deg)}.footer-row{display:grid}.rca-stage{padding:var(--space-3)}}
+    @media print{.topbar{position:static}.badge{display:none}section{padding-block:2.2rem;break-inside:avoid}.table-wrap{overflow:visible;box-shadow:none}table{min-width:0}th,td{padding:.45rem;font-size:.55rem}}
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="#top"><span class="brand-mark">K</span><strong>Kimbal</strong></a>
-    <nav><a href="#sources">Data sources</a><a href="#flow">Process flow</a><a href="#modules">Modules</a><a href="#cases">Case paths</a><a href="#trace">Example trace</a></nav>
-    <span class="demo">System blueprint · demo data</span>
-  </header>
-
+  <header class="topbar"><div class="shell"><a class="brand" href="#top"><span class="mark">K</span><strong>Kimbal</strong></a><nav><a href="#architecture">Architecture</a><a href="#sources">Data sources</a><a href="#modules">Modules</a><a href="#rca">RCA engine</a><a href="#capa">CAPA & back-trace</a></nav><span class="badge">System draft · synthetic data</span></div></header>
   <main id="top">
-    <section class="hero">
-      <div>
-        <span class="eyebrow">Kimbal FFR Intelligence</span>
-        <h1>What comes from where.<span>What the system does next.</span></h1>
-        <p>An end-to-end blueprint for moving a returned smart meter from sourcing and store receipt through evidence-controlled analysis, RCA, CAPA, back-tracing and closure.</p>
-      </div>
-      <aside class="hero-aside"><strong>How to read this page</strong><p>Start with the source-system matrix. Then follow the numbered process. The module section shows ownership; the case section shows branches and exceptions.</p></aside>
+    <section class="hero shell">
+      <span class="eyebrow">Kimbal FFR Intelligence</span>
+      <h1>Data enters.<span>Evidence becomes RCA.</span></h1>
+      <p>This page explains only the proposed system: who provides each data set, how Kimbal ingests it, which module processes it, and how vision, BCS/DLMS and equipment-reading AI combine into an evidence-backed RCA, CAPA and back-trace.</p>
+      <div class="hero-rule"><div><strong>Inputs stay traceable</strong><span>Every imported value retains source, source record and retrieval version.</span></div><div><strong>AI analyses evidence</strong><span>It does not replace raw images, protocol traces or instrument readings.</span></div><div><strong>RCA remains governed</strong><span>Facts, inference, confidence, contradiction and approval are stored separately.</span></div></div>
     </section>
 
-    <section>
-      <div class="section-head"><span class="eyebrow">System in one line</span><div><h2>Six connected movements</h2><p>The physical meter and its digital evidence move together. Each handoff updates the same case record.</p></div></div>
-      <div class="system-sentence">
-        <div><span>01</span><strong>Source return</strong><small>Complaint, return authorization and dispatch context.</small></div>
-        <div><span>02</span><strong>Receive in store</strong><small>GRN, custody, location, photographs and identity.</small></div>
-        <div><span>03</span><strong>Prepare evidence</strong><small>Genealogy, optical extraction and readiness gates.</small></div>
-        <div><span>04</span><strong>Analyse failure</strong><small>Safe tests, observations, hypotheses and teardown.</small></div>
-        <div><span>05</span><strong>Act on cause</strong><small>RCA approval, CAPA, replacement and disposition.</small></div>
-        <div><span>06</span><strong>Back-trace & learn</strong><small>Batch exposure, supplier/process link and recurrence.</small></div>
+    <section class="shell" id="architecture">
+      <div class="section-head"><span class="eyebrow">System architecture</span><div><h2>Source data → Kimbal intelligence → controlled outputs</h2><p>This is the complete software boundary. Store operations happen inside Kimbal; there is no WMS integration in the proposed initial system.</p></div></div>
+      <div class="architecture">
+        <div class="arch-col"><div class="arch-title">Data providers</div><div class="arch-card"><strong>Sales / Utility / AMISP</strong><small>Complaint and return information</small></div><div class="arch-card"><strong>SAP</strong><small>GRN, return/repair order and scrap processing</small></div><div class="arch-card"><strong>MES</strong><small>Manufacturing genealogy and process history</small></div><div class="arch-card"><strong>Vision + BCS/DLMS + equipment</strong><small>Technical evidence generated at the RCA facility</small></div><div class="arch-card"><strong>Analyst / reviewer</strong><small>Structured feedback and approval</small></div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-core"><h3>Kimbal FFR Intelligence</h3><ol><li>Ingest and validate source data</li><li>Create one case and reconcile meter identity</li><li>Preserve original evidence</li><li>Run vision, BCS/DLMS and equipment-reading AI analysis</li><li>Fuse findings into competing hypotheses</li><li>Recommend and record the next approved test</li><li>Synthesize and approve structured RCA</li><li>Create CAPA and back-trace affected population</li></ol></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-col"><div class="arch-title">System outputs</div><div class="arch-card"><strong>Case 360 record</strong><small>Evidence, history, state and audit trail</small></div><div class="arch-card"><strong>Approved RCA</strong><small>Internal and customer-safe reports</small></div><div class="arch-card"><strong>CAPA</strong><small>Containment through effectiveness</small></div><div class="arch-card"><strong>Back-trace</strong><small>PCB/batch/line/supplier exposure</small></div><div class="arch-card"><strong>SAP closure</strong><small>RO/return and scrap-process status</small></div></div>
       </div>
     </section>
 
-    <section class="tint" id="sources">
-      <div class="section-head"><span class="eyebrow">1 · Data source matrix</span><div><h2>Which system provides which data</h2><p>The prototype uses simulated adapters. The future production connectors will implement the same read, reconcile, status and audit contract.</p></div></div>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Source / owner</th><th>Data provided</th><th>When requested</th><th>What Kimbal does with it</th><th>Result in the case</th></tr></thead>
-        <tbody>
-          <tr><td><strong>Utility / AMISP</strong><small>Complaint source</small></td><td>Reported symptom, site, removal date, photographs, contact, service context</td><td>Before or during return creation</td><td>Stores facts as reported observations; does not treat them as root cause</td><td>Complaint record and evidence-gap list</td></tr>
-          <tr><td><strong>SAP</strong><small>Commercial source</small></td><td>Return reference, GRN, material code, customer/project, warranty, repair order, replacement and receipt</td><td>At intake, approval and commercial closure</td><td>Matches references to meter identity; tracks commercial status separately from technical status</td><td>Valid return context, RO and replacement state</td></tr>
-          <tr><td><strong>WMS / Store</strong><small>Physical custody</small></td><td>Receipt time, package condition, location, batch, quarantine, movement, retained sample and destruction</td><td>At every physical handoff</td><td>Creates custody events and checks that the scanned meter matches the digital case</td><td>Traceable physical location and disposition</td></tr>
-          <tr><td><strong>Meter label / scanner</strong><small>Observed identity</small></td><td>Serial number, model, variant, rating, barcode/QR and seal details</td><td>At receipt before intervention</td><td>Compares printed and scanned values with SAP, MES and complaint identities</td><td>Matched identity or identity exception</td></tr>
-          <tr><td><strong>MES</strong><small>Manufacturing source</small></td><td>BOM, PCB batch, firmware, production line/station, process tests, calibration, rework and supplier lots</td><td>After identity match and during back-tracing</td><td>Freezes genealogy, links suspected components to build population and accepts confirmed-failure feedback later</td><td>Genealogy snapshot and affected-population candidates</td></tr>
-          <tr><td><strong>Optical / DLMS</strong><small>Meter evidence</small></td><td>Read-only raw trace, decoded objects, firmware, events, errors and readable registers</td><td>Before reset, write, cleaning or teardown</td><td>Preserves the first extraction unchanged; stores raw and decoded views with parser version</td><td>Meter-side evidence and communication status</td></tr>
-          <tr><td><strong>Laboratory equipment</strong><small>Measured evidence</small></td><td>Safety checks, voltages, currents, resistance, battery, relay, communication and functional results</td><td>When an approved recipe is executed</td><td>Validates fixture and calibration; records raw values; applies stop rules; never invents measurements</td><td>Test execution, observation and pass/fail result</td></tr>
-          <tr><td><strong>Analyst / reviewer</strong><small>Human evidence and authority</small></td><td>Structured observations, waiver reasons, teardown findings, conclusion review and approval comments</td><td>At controlled intervention and decision gates</td><td>Separates observation from hypothesis, checks permissions and records every override</td><td>Audited finding, approval or blocked action</td></tr>
-          <tr><td><strong>HES</strong><small>Field chronology</small><span class="later">Later phase</span></td><td>Communication history, outage/events, relay operations, firmware history and data gaps</td><td>Later, after the core workflow is stable</td><td>Will align field timestamps to removal and use them to support or contradict hypotheses</td><td>Future field-evidence timeline; not required for initial delivery</td></tr>
-        </tbody>
-      </table></div>
-    </section>
+    <section class="tint" id="sources"><div class="shell">
+      <div class="section-head"><span class="eyebrow">Data source contract</span><div><h2>Who provides what—and how it enters Kimbal</h2><p>Only data that supports intake, diagnosis, RCA, closure or back-tracing is included.</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Provider</th><th>Data supplied</th><th>How Kimbal receives it</th><th>What Kimbal creates from it</th></tr></thead><tbody>
+        <tr><td><strong>Sales / Utility / AMISP</strong><small>Complaint and return source</small></td><td>Meter number; utility/AMISP/project; pre-install or post-install; complaint date; structured complaint; original free text; available photos; site/project reference; return or batch reference.</td><td><strong>Primary:</strong> intake module being developed by Deepu.<br><strong>Fallback:</strong> controlled Excel-sheet import with field validation and row-level error reporting.</td><td>Complaint record, expected meter record, evidence checklist, ownership and priority. The source provides observations—not diagnosis.</td></tr>
+        <tr><td><strong>SAP</strong><small>Narrow commercial/process scope</small></td><td>GRN; return order or repair order number/status; and the SAP process/status required to scrap the meter.</td><td>Read through a controlled adapter or approved export. Writeback is limited to authorized order/status actions.</td><td>GRN linkage, return/repair-order state, scrap-process state and commercial closure. SAP is not treated as the source of technical RCA evidence.</td></tr>
+        <tr><td><strong>Store module</strong><small>Inside Kimbal; no WMS</small></td><td>Physical receipt confirmation; scanned meter number; package/seal condition; intake photos; rack/location; handover; quarantine/retention/destruction status.</td><td>Entered directly by Store Operator in Kimbal through scan-led receipt and movement screens.</td><td>Physical custody timeline, current meter location, evidence hold and authorized disposition.</td></tr>
+        <tr><td><strong>MES</strong><small>Manufacturing and genealogy</small></td><td>Serial/model/variant; BOM; NPC/product configuration reference; PCB revision and batch; firmware; production line/station; process tests; calibration; rework; supplier/lot information; quality or supplier alerts.</td><td>Serial-based query after identity is confirmed; response is frozen as a case-specific genealogy snapshot.</td><td>Manufacturing context for diagnosis and back-tracing: build population, common PCB/supplier/process links, original test comparison and possible escape point.</td></tr>
+        <tr><td><strong>Vision stations</strong><small>External and internal images</small></td><td>Standard exterior, label/terminal, seal, opened assembly, PCB front/back and region-of-interest images.</td><td>Guided capture in Kimbal with required view, image quality and before/after intervention gates.</td><td>Structured visual observations, golden-reference comparison and highlighted regions. Vision does not directly declare root cause.</td></tr>
+        <tr><td><strong>BCS / optical DLMS</strong><small>Meter-resident digital evidence</small></td><td>Identity; hardware/firmware/configuration; RTC/drift; reset counters; events/tampers/snapshots; load survey; instantaneous and power-quality values; relay state/history; communication status; command/firmware history; data gaps; battery and status registers.</td><td>First session is read-only. Kimbal stores raw trace, decoded objects, OBIS/object IDs, units/scalers, access errors, extraction time, tool version and object-map version.</td><td>A versioned BCS/DLMS evidence package, digital signatures/anomalies and timeline features for AI analysis. No reset, clear, synchronization, upgrade or command occurs before preservation.</td></tr>
+        <tr><td><strong>Laboratory equipment</strong><small>Bench and instrument readings</small></td><td>Safety checks; voltage/current/resistance; battery; rails; relay; RTC; metrology; communication; waveforms; functional results; equipment and calibration identifiers.</td><td>Approved test recipe calls a simulated/production adapter. Operator, fixture and calibration are validated before raw readings are accepted.</td><td>Immutable test executions, normalized readings, expected-versus-actual result, pass/fail/stop condition and evidence links.</td></tr>
+        <tr><td><strong>Analyst / reviewer</strong><small>Human feedback and authority</small></td><td>Structured feedback on observations, AI recommendations, contradictions, teardown findings, conclusion quality, waiver/override reason and approval comments.</td><td>Role-controlled forms tied to the exact case state and evidence item being reviewed.</td><td>Accepted/corrected finding, audited override, technical validation and release approval. Human input is feedback and authority—not replacement of raw evidence.</td></tr>
+        <tr><td><strong>HES</strong><small>Future field evidence</small><span class="pill">Later phase</span></td><td>Communication sessions, outage/restoration, events, relay commands, clock sync, firmware/configuration changes and data gaps.</td><td>Added later through API/database or standardized file request after the core system is stable.</td><td>Future field chronology aligned to meter time. HES is not part of the initial implementation or required for initial RCA workflow.</td></tr>
+      </tbody></table></div>
+    </div></section>
 
-    <section id="flow">
-      <div class="section-head"><span class="eyebrow">2 · End-to-end process</span><div><h2>What happens at every step</h2><p>Each row shows the owner/module, incoming data, processing and output. A case advances only when the output satisfies the next gate.</p></div></div>
-      <div class="flow">
-        <article class="flow-row"><div>01</div><div><h3>Sourcing / return creation</h3><p>Cases & Intake</p></div><div><span class="label">Incoming</span>Complaint facts, SAP return reference, dispatch details and initial photographs.</div><div><span class="label">System action</span>Create case ID, owner, priority, SLA and required-evidence checklist.</div><div><span class="label">Output / handoff</span>Expected return record sent to Store intake.</div></article>
-        <article class="flow-row"><div>02</div><div><h3>Store receipt & custody</h3><p>Store + Cases & Intake</p></div><div><span class="label">Incoming</span>Physical package, GRN, scanned serial, package condition and location.</div><div><span class="label">System action</span>Match expected return, photograph condition, seal evidence and start chain of custody.</div><div><span class="label">Output / handoff</span>Received case or <span class="gate">commercial / identity exception</span>.</div></article>
-        <article class="flow-row"><div>03</div><div><h3>Identity & genealogy</h3><p>Case 360 + Integration adapters</p></div><div><span class="label">Incoming</span>Reported, printed, optical, SAP, MES and WMS identities.</div><div><span class="label">System action</span>Reconcile all sources and freeze MES genealogy for the matched serial.</div><div><span class="label">Output / handoff</span>Verified identity and genealogy, or <span class="gate">identity exception queue</span>.</div></article>
-        <article class="flow-row"><div>04</div><div><h3>Evidence readiness</h3><p>Case 360</p></div><div><span class="label">Incoming</span>Photos, custody, genealogy, complaint and first optical/DLMS read.</div><div><span class="label">System action</span>Evaluate preservation checklist and block cleaning, writes, energization or teardown until complete.</div><div><span class="label">Output / handoff</span>Test-ready evidence pack or <span class="gate">evidence exception</span>.</div></article>
-        <article class="flow-row"><div>05</div><div><h3>Safe screening</h3><p>Laboratory Line</p></div><div><span class="label">Incoming</span>Meter variant, safety state, approved recipe, fixture and equipment calibration.</div><div><span class="label">System action</span>Run visual, unpowered, battery, controlled-mains and core functional checks with stop conditions.</div><div><span class="label">Output / handoff</span>Reproduced symptom, baseline signature and safe diagnostic branch.</div></article>
-        <article class="flow-row"><div>06</div><div><h3>Diagnostic analysis</h3><p>Agentic Diagnosis + Lab</p></div><div><span class="label">Incoming</span>Complaint, genealogy, raw measurements, observations, golden references and known failure patterns.</div><div><span class="label">System action</span>Rank competing hypotheses; recommend the safest test with highest information gain; update confidence after result.</div><div><span class="label">Output / handoff</span>Resolved cause, NFR or inconclusive diagnosis with evidence links.</div></article>
-        <article class="flow-row"><div>07</div><div><h3>Teardown & component finding</h3><p>Laboratory + Case 360</p></div><div><span class="label">Incoming</span>Approved teardown request, preserved pre-open images and diagnostic target area.</div><div><span class="label">System action</span>Capture opened assembly, follow probe sequence and record component/node findings before removal.</div><div><span class="label">Output / handoff</span>Confirmed/probable mechanism and retained component evidence.</div></article>
-        <article class="flow-row"><div>08</div><div><h3>RCA & approval</h3><p>RCA / Reports / Approval</p></div><div><span class="label">Incoming</span>Observation, reproduced symptom, failed function, subsystem, node, mechanism and origin evidence.</div><div><span class="label">System action</span>Build causal hierarchy, confidence and escape point; run technical, quality, liability and release approvals.</div><div><span class="label">Output / handoff</span>Approved structured RCA, internal report and customer-safe report.</div></article>
-        <article class="flow-row"><div>09</div><div><h3>CAPA & commercial closure</h3><p>CAPA + SAP tracking</p></div><div><span class="label">Incoming</span>Approved cause, affected population, disposition, repair order and replacement requirement.</div><div><span class="label">System action</span>Assign containment/correction/actions; track implementation; update repair and replacement states.</div><div><span class="label">Output / handoff</span>Independent technical, commercial and CAPA closure states.</div></article>
-        <article class="flow-row"><div>10</div><div><h3>Back-tracing & learning</h3><p>Population Intelligence</p></div><div><span class="label">Incoming</span>Confirmed signatures, PCB/firmware/supplier/line links, CAPA and recurrence results.</div><div><span class="label">System action</span>Find related population, select representative cases, isolate outliers and monitor CAPA effectiveness.</div><div><span class="label">Output / handoff</span>Systemic alert, containment recommendation, MES feedback and updated diagnostic/test rule.</div></article>
+    <section class="shell" id="modules">
+      <div class="section-head"><span class="eyebrow">Module map</span><div><h2>What each Kimbal module does</h2><p>Read top to bottom. Each output becomes the next module’s input; all modules update the same case record.</p></div></div>
+      <div class="pipeline">
+        <article class="module"><div class="num">01</div><div><h3>Source Intake</h3><p>Deepu module + Excel fallback</p></div><div><span class="field-label">Receives</span>Sales/Utility/AMISP complaint and return data.</div><div><span class="field-label">Processing</span>Validate fields, map complaint code, deduplicate and identify missing evidence.</div><div class="module-output"><span class="field-label">Produces</span>Draft FFR case ready for Store receipt.</div></article>
+        <article class="module"><div class="num">02</div><div><h3>Store & Physical Intake</h3><p>Kimbal-native; no WMS</p></div><div><span class="field-label">Receives</span>Draft case, physical meter and SAP GRN.</div><div><span class="field-label">Processing</span>Scan identity, record package/seals/photos/location and start custody.</div><div class="module-output"><span class="field-label">Produces</span>Received meter linked to its digital case.</div></article>
+        <article class="module"><div class="num">03</div><div><h3>Case & Data Orchestration</h3><p>Case 360 + integration status</p></div><div><span class="field-label">Receives</span>Intake, Store scan, SAP GRN/RO, MES genealogy, vision and BCS/DLMS.</div><div><span class="field-label">Processing</span>Reconcile identity, retain source/version, freeze evidence and enforce intervention gates.</div><div class="module-output"><span class="field-label">Produces</span>Complete traceable evidence package or explicit data exception.</div></article>
+        <article class="module"><div class="num">04</div><div><h3>Technical Analysis</h3><p>Vision + BCS/DLMS + equipment AI</p></div><div><span class="field-label">Receives</span>Preserved images, digital meter data, lab readings, MES context and complaint.</div><div><span class="field-label">Processing</span>Run three evidence-specific AI analyses, fuse findings, rank hypotheses and choose next-best test.</div><div class="module-output"><span class="field-label">Produces</span>Reproduced symptom, evidence map, diagnostic conclusion and confidence.</div></article>
+        <article class="module"><div class="num">05</div><div><h3>RCA & Approval</h3><p>Central outcome of the platform</p></div><div><span class="field-label">Receives</span>All verified observations, test results, hypothesis history, MES context and component findings.</div><div><span class="field-label">Processing</span>Build causal hierarchy; separate fact/inference; identify origin and escape point; apply reviewer gates.</div><div class="module-output"><span class="field-label">Produces</span>Approved structured RCA plus internal and customer-safe reports.</div></article>
+        <article class="module"><div class="num">06</div><div><h3>CAPA Management</h3><p>Cause to verified action</p></div><div><span class="field-label">Receives</span>Approved root cause, origin, escape point and affected-population hypothesis.</div><div><span class="field-label">Processing</span>Assign containment, correction, corrective/preventive actions, owner, target and effectiveness rule.</div><div class="module-output"><span class="field-label">Produces</span>Tracked CAPA with implementation evidence and effectiveness state.</div></article>
+        <article class="module"><div class="num">07</div><div><h3>Back-tracing & Population</h3><p>Individual case to systemic exposure</p></div><div><span class="field-label">Receives</span>RCA signature plus MES PCB/batch/line/supplier/firmware/process links.</div><div><span class="field-label">Processing</span>Find related meters/cases, measure homogeneity, select representative samples and isolate outliers.</div><div class="module-output"><span class="field-label">Produces</span>Affected population, systemic alert, shared RCA/CAPA candidate and MES feedback.</div></article>
+        <article class="module"><div class="num">08</div><div><h3>Closure & Governance</h3><p>Independent controlled endpoints</p></div><div><span class="field-label">Receives</span>Approved RCA, CAPA state, SAP RO/return and scrap-process status.</div><div><span class="field-label">Processing</span>Enforce technical, commercial, CAPA, report-release and destruction approvals separately.</div><div class="module-output"><span class="field-label">Produces</span>Audited closure without treating replacement as technical RCA completion.</div></article>
       </div>
     </section>
 
-    <section class="tint" id="modules">
-      <div class="section-head"><span class="eyebrow">3 · Module ownership</span><div><h2>Which module does what</h2><p>Open a module to see its responsibility, stored records, decisions and direct handoff.</p></div></div>
-      <div class="modules">
-        <details open><summary><b>01</b><strong>Cases & Intake</strong><span>Sourcing → received case</span></summary><div class="module-body"><div><strong>Owns</strong>Complaint, return, GRN, custody start, identity checklist, evidence completeness, owner and SLA.</div><div><strong>Decides</strong>Ready, evidence exception, identity exception or commercial exception.</div><div><strong>Stores</strong>Case, complaint, identity candidates, intake evidence and audit events.</div><div><strong>Handoff</strong>Ready case to Case 360; exception to the responsible resolution queue.</div></div></details>
-        <details><summary><b>02</b><strong>Store & Physical Tracking</strong><span>Receipt → disposition</span></summary><div class="module-body"><div><strong>Owns</strong>Physical receipt, label, location, movement, quarantine, retention and destruction.</div><div><strong>Decides</strong>Correct item received, custody complete and disposition allowed.</div><div><strong>Stores</strong>Custody events, package condition, WMS references and physical location.</div><div><strong>Handoff</strong>Meter to assigned lab station; final disposition back to closure.</div></div></details>
-        <details><summary><b>03</b><strong>Case 360</strong><span>Single source of truth</span></summary><div class="module-body"><div><strong>Owns</strong>Complete case timeline and the links between all evidence, actions and decisions.</div><div><strong>Decides</strong>Whether evidence gates allow energization, teardown, release or destruction.</div><div><strong>Stores</strong>Evidence graph, observations, integration records, approvals and closure states.</div><div><strong>Handoff</strong>Authorized work to Lab, Analysis, Reports, CAPA or Closure.</div></div></details>
-        <details><summary><b>04</b><strong>Laboratory Line</strong><span>Instruction → measurement</span></summary><div class="module-body"><div><strong>Owns</strong>Station queue, test recipe, fixture, equipment/calibration and raw measurement capture.</div><div><strong>Decides</strong>Safe to run, pass/fail, stop condition and next physical station.</div><div><strong>Stores</strong>Test execution, raw values, operator, timestamps and equipment version.</div><div><strong>Handoff</strong>Evidence to Analysis and meter to the routed station.</div></div></details>
-        <details><summary><b>05</b><strong>Agentic Analysis</strong><span>Evidence → next best test</span></summary><div class="module-body"><div><strong>Owns</strong>Hypothesis set, support, contradiction, missing evidence and recommended route.</div><div><strong>Decides</strong>Which approved test best separates remaining causes; does not execute unsafe action.</div><div><strong>Stores</strong>Score history, reasoning trace, recommendation, acceptance and override.</div><div><strong>Handoff</strong>Test request to Lab or resolved evidence to RCA.</div></div></details>
-        <details><summary><b>06</b><strong>RCA, Reports & Approval</strong><span>Finding → approved conclusion</span></summary><div class="module-body"><div><strong>Owns</strong>Causal hierarchy, confidence, escape point, liability recommendation and report views.</div><div><strong>Decides</strong>Technical approval, quality approval and authorized customer release.</div><div><strong>Stores</strong>Structured RCA, approval comments, versions and generated documents.</div><div><strong>Handoff</strong>Approved cause to CAPA and population analysis.</div></div></details>
-        <details><summary><b>07</b><strong>CAPA</strong><span>Cause → verified action</span></summary><div class="module-body"><div><strong>Owns</strong>Containment, correction, corrective/preventive action, owner, due date and evidence.</div><div><strong>Decides</strong>Implemented, monitoring, effective or failed effectiveness.</div><div><strong>Stores</strong>Affected population, baseline, target, observation window and pass rule.</div><div><strong>Handoff</strong>Result to Quality, case closure and recurrence monitoring.</div></div></details>
-        <details><summary><b>08</b><strong>Back-tracing & Population</strong><span>Case → affected population</span></summary><div class="module-body"><div><strong>Owns</strong>Clusters by model, PCB, firmware, supplier, line, project, mechanism and signature.</div><div><strong>Decides</strong>Representative sample, homogeneity, outlier status and systemic alert threshold.</div><div><strong>Stores</strong>Cluster, master RCA link, population estimate and shared CAPA link.</div><div><strong>Handoff</strong>Containment to Quality and feedback to MES/test knowledge.</div></div></details>
-        <details><summary><b>09</b><strong>Knowledge & Governance</strong><span>Rules for every module</span></summary><div class="module-body"><div><strong>Owns</strong>Test catalogue, safety rules, permissions, models, golden references and integrations.</div><div><strong>Decides</strong>Which version is active and which actions each person/agent may perform.</div><div><strong>Stores</strong>Version history, calibration, overrides, drift, audit and rollback point.</div><div><strong>Handoff</strong>Approved rules to all modules; HES adapter is added in a later phase.</div></div></details>
+    <section class="tint" id="rca"><div class="shell">
+      <div class="section-head"><span class="eyebrow">RCA intelligence core</span><div><h2>Three AI analyses feed one diagnostic reasoning loop</h2><p>RCA is not generated directly from a complaint. It is synthesized only after independent image, digital-data and instrument analyses have produced evidence that can be compared, contradicted and tested.</p></div></div>
+      <div class="rca-stage">
+        <h3>Independent evidence analysis</h3>
+        <div class="engines">
+          <article class="engine vision"><b>Vision-based AI analysis</b><p>Compares external and internal images with the correct model, PCB, BOM and configuration baseline.</p><ul><li>Burn, corrosion, moisture, terminal heating and impact</li><li>Missing/wrong/displaced components and connector issues</li><li>Solder, contamination, carbon tracking and PCB damage</li><li>Outputs observations and regions—not causal claims</li></ul></article>
+          <article class="engine data"><b>BCS/DLMS data-based AI analysis</b><p>Interprets the preserved digital package while retaining raw trace and object-map provenance.</p><ul><li>Reset/event/tamper chronology and RTC drift</li><li>Firmware/configuration mismatch and status-register patterns</li><li>Load survey, instantaneous, power-quality and data-gap signatures</li><li>Relay/communication/battery history and access failures</li></ul></article>
+          <article class="engine test"><b>Equipment-reading AI analysis</b><p>Interprets calibrated measurements against variant-specific limits, golden units and expected waveforms.</p><ul><li>Power path, PSU rails, battery, MCU reset/clock and relay</li><li>Metrology, communication and complaint-specific function</li><li>Raw value → normalized finding → hypothesis impact</li><li>Automatic safety stop and invalid-test detection</li></ul></article>
+        </div>
+        <div class="fusion">
+          <div class="fusion-input"><div>Complaint observation + Store evidence</div><div>MES genealogy + original process/test history</div><div>Vision AI findings</div><div>BCS/DLMS AI findings</div><div>Equipment-reading AI findings</div><div>Historical RCA and golden-reference knowledge</div></div>
+          <div class="fusion-arrow">→</div>
+          <div class="reasoner"><h4>Diagnostic reasoning agent</h4><ol><li>Creates multiple plausible hypotheses</li><li>Links supporting, contradictory and missing evidence</li><li>Scores confidence without hiding uncertainty</li><li>Chooses the approved test with highest information gain</li><li>Sends the test to the laboratory workflow</li><li>Updates every hypothesis from the new result</li><li>Stops at confirmed, probable, NFR or inconclusive</li><li>Passes the resolved evidence graph to RCA synthesis</li></ol></div>
+        </div>
       </div>
-    </section>
+      <div class="causal" aria-label="Structured RCA hierarchy"><span>Reported observation</span><i>→</i><span>Reproduced symptom</span><i>→</i><span>Failed function</span><i>→</i><span>Subsystem</span><i>→</i><span>Component / node</span><i>→</i><span>Physical mechanism</span><i>→</i><span>Initiating cause</span><i>→</i><span>Contributors</span><i>→</i><span>Origin</span><i>→</i><span>Escape point</span><i>→</i><span>Confidence + evidence</span></div>
+      <div class="rca-output"><article><h4>Structured RCA record</h4><p>Searchable fields, evidence links, confidence, contradictions, missing evidence and approval history.</p></article><article><h4>Internal RCA report</h4><p>Full technical detail, hypothesis history, raw/derived results, liability recommendation and CAPA.</p></article><article><h4>Customer-safe report</h4><p>Generated from the approved record without internal scores, unsupported blame or billing conclusions.</p></article><article><h4>RCA feedback</h4><p>Confirmed signature flows to CAPA, MES back-tracing, test-rule improvement and population learning.</p></article></div>
+    </div></section>
 
-    <section id="cases">
-      <div class="section-head"><span class="eyebrow">4 · Case paths</span><div><h2>Not every return follows the same branch</h2><p>All cases share intake, identity and evidence control. The analysis branch changes according to the reproduced symptom and available evidence.</p></div></div>
-      <div class="cases">
-        <article class="case"><h3>Confirmed hardware failure</h3><p>Symptom reproduced; electrical/component evidence supports a cause.</p><b>Path: core test → targeted test → teardown → RCA → CAPA</b></article>
-        <article class="case"><h3>Communication failure</h3><p>Local meter functions pass; optical/RF/network evidence becomes the diagnostic branch.</p><b>Path: core test → comms test → firmware/configuration evidence</b></article>
-        <article class="case"><h3>Relay / switching failure</h3><p>Safety and controlled-load tests examine command, drive path, contacts and mechanism.</p><b>Path: safe screen → relay recipe → targeted teardown</b></article>
-        <article class="case"><h3>RTC / battery drift</h3><p>Battery domain, RTC accuracy, event chronology and storage conditions are compared.</p><b>Path: battery test → RTC observation → component/environment branch</b></article>
-        <article class="case"><h3>Terminal heating</h3><p>Highest-risk branch; external evidence is preserved before any energization or opening.</p><b>Path: safety block → thermal/terminal inspection → controlled specialist route</b></article>
-        <article class="case exception"><h3>No fault reproduced</h3><p>Core and complaint-specific tests pass; system records coverage and missing field conditions.</p><b>Outcome: NFR with tested conditions, not an invented cause</b></article>
-        <article class="case exception"><h3>Inconclusive</h3><p>Evidence is contradictory or insufficient after approved tests.</p><b>Outcome: explicit unknowns, confidence and escalation / retention plan</b></article>
-        <article class="case blocked"><h3>Blocked exception</h3><p>Identity mismatch, missing evidence, unsafe condition, expired calibration or unauthorized action.</p><b>Outcome: stop workflow until resolved or formally waived</b></article>
-      </div>
-    </section>
-
-    <section class="tint" id="trace">
-      <div class="section-head"><span class="eyebrow">5 · Example data trace</span><div><h2>Blank-display case: data moving through the system</h2><p>Fictional case FFR-2026-04782 shows how one input becomes a measurement, conclusion, action and back-trace.</p></div></div>
-      <div class="trace">
-        <div><span>SOURCE</span><strong>Utility + SAP</strong><p>“Display blank”, removal date, serial, GRN and customer/project.</p></div>
-        <div><span>STORE</span><strong>WMS + scan</strong><p>Package received, seals intact, serial matched, custody started.</p></div>
-        <div><span>PREPARE</span><strong>MES + optical</strong><p>PCB-24-06-117 genealogy frozen; first DLMS read preserved.</p></div>
-        <div><span>ANALYSE</span><strong>Lab + agent</strong><p>12.1 V regulator input, 0.08 V output, normal downstream resistance.</p></div>
-        <div><span>CONCLUDE</span><strong>RCA + review</strong><p>3.3 V regulator-stage failure highly probable; evidence-linked approval.</p></div>
-        <div><span>ACT</span><strong>CAPA + SAP</strong><p>Screen affected PCB batch; retain samples; track replacement and repair order.</p></div>
-        <div><span>BACK-TRACE</span><strong>Population + MES</strong><p>Find 1,248 possible meters; compare recurrence and supplier/process history.</p></div>
-      </div>
-      <div class="note"><strong>HES is intentionally not part of this initial trace.</strong> It will be integrated later to add field communication and event chronology after the core sourcing, store, laboratory, RCA, CAPA and back-tracing flow is stable.</div>
-    </section>
-
-    <section>
-      <div class="section-head"><span class="eyebrow">6 · Closure logic</span><div><h2>One case, three independent endings</h2><p>The case is visible as one record, but closure is not collapsed into one status.</p></div></div>
-      <div class="closure">
-        <article><h3>Technical closure</h3><p>Required evidence complete, diagnosis classified, structured RCA approved and report state recorded.</p></article>
-        <article><h3>Commercial closure</h3><p>Repair order, replacement dispatch, customer receipt and liability decision completed through authorized processes.</p></article>
-        <article><h3>CAPA closure</h3><p>Actions implemented and effectiveness rule passed across the defined population and observation window.</p></article>
-      </div>
+    <section class="shell" id="capa">
+      <div class="section-head"><span class="eyebrow">After RCA</span><div><h2>CAPA and back-tracing close the learning loop</h2><p>The approved RCA becomes the input; the system does not ask users to recreate the cause in another document.</p></div></div>
+      <div class="close-loop"><article class="loop-card"><h3>CAPA module</h3><ul><li>Contain potentially affected meters</li><li>Correct the returned case</li><li>Remove the confirmed root cause</li><li>Prevent recurrence in related product/process</li><li>Define owner, due date, metric, target and pass rule</li></ul></article><div class="loop-arrow">→</div><article class="loop-card"><h3>Back-tracing module</h3><ul><li>Query MES by PCB/batch/firmware/line/supplier/process</li><li>Link similar RCA signatures and visual/DLMS/test patterns</li><li>Estimate affected population</li><li>Select representative samples and identify outliers</li><li>Create systemic alert or shared RCA/CAPA candidate</li></ul></article><div class="loop-arrow">→</div><article class="loop-card"><h3>Effectiveness & closure</h3><ul><li>Monitor recurrence against baseline and target</li><li>Verify action evidence and observation window</li><li>Reopen failed CAPA automatically</li><li>Send validated feedback to MES/test knowledge</li><li>Track SAP RO/return and scrap status separately</li></ul></article></div>
+      <div class="future"><strong>HES is a later-phase addition.</strong> Once the core intake, Store, MES, BCS/DLMS, laboratory, RCA, CAPA and back-tracing modules are stable, HES will add field communication and event chronology as another evidence input to the same diagnostic reasoning loop.</div>
     </section>
   </main>
-
-  <footer><strong>Kimbal FFR Intelligence · End-to-end system blueprint</strong><span>Standalone prototype explanation · synthetic data · HES planned later</span></footer>
+  <footer><div class="shell footer-row"><strong>Kimbal FFR Intelligence · Data-to-RCA system draft</strong><span>Standalone explanation · synthetic data · HES planned later</span></div></footer>
 </body>
 </html>
