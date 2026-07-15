@@ -62,13 +62,15 @@ test("keeps the complete prototype and project assets wired", async () => {
 test("stakeholder overview is a complete standalone narrative", async () => {
   const html = await readFile(new URL("../public/stakeholder-overview.html", import.meta.url), "utf8");
   assert.match(html, /<!doctype html>/i);
-  assert.match(html, /Field failure[\s\S]*factory learning/i);
+  assert.match(html, /One controlled flow[\s\S]*from return to learning/i);
   assert.match(html, /6,000/);
   assert.match(html, /FFR-2026-04782/);
-  assert.match(html, /Nine connected product modules/);
+  assert.match(html, /Nine modules connected by one case state machine/);
   assert.match(html, /Specialist agents/);
   assert.match(html, /Foundation first/);
   assert.match(html, /Run next test/);
   assert.match(html, /evidence\/meter-exterior\.png/);
   assert.match(html, /@media print/);
+  assert.match(html, /HES integration is a later phase/);
+  assert.match(html, /HES added here/);
 });
