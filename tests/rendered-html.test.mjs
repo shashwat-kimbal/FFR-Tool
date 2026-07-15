@@ -88,4 +88,8 @@ test("stakeholder overview is a complete standalone system blueprint", async () 
   assert.doesNotMatch(html, /font-weight:(?!var\()/);
   assert.doesNotMatch(html, /letter-spacing:(?!var\()/);
   assert.doesNotMatch(html, /line-height:(?!var\()/);
+  assert.doesNotMatch(html, /\.rca-stage\{[^}]*background:var\(--color-navy\)/);
+  assert.doesNotMatch(html, /\.reasoner\{[^}]*background:#102f50/);
+  assert.match(html, /\.engine\{[^}]*border:1px solid var\(--color-border\)/);
+  assert.match(html, /\.reasoner\{[^}]*background:var\(--color-brand-soft\)/);
 });
