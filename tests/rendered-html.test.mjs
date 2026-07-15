@@ -62,7 +62,10 @@ test("keeps the complete prototype and project assets wired", async () => {
 test("stakeholder overview is a complete standalone system blueprint", async () => {
   const html = await readFile(new URL("../public/stakeholder-overview.html", import.meta.url), "utf8");
   assert.match(html, /<!doctype html>/i);
-  assert.match(html, /Data enters[\s\S]*Evidence becomes RCA/i);
+  assert.match(html, /Proposed end-to-end[\s\S]*FFR and RCA system/i);
+  assert.doesNotMatch(html, /Data enters/);
+  assert.doesNotMatch(html, /Evidence becomes RCA/);
+  assert.doesNotMatch(html, /hero-rule/);
   assert.match(html, /intake module being developed by Deepu/);
   assert.match(html, /controlled Excel-sheet import/);
   assert.match(html, /GRN; return order or repair order/);
@@ -72,7 +75,11 @@ test("stakeholder overview is a complete standalone system blueprint", async () 
   assert.match(html, /Vision-based AI analysis/);
   assert.match(html, /BCS\/DLMS data-based AI analysis/);
   assert.match(html, /Equipment-reading AI analysis/);
-  assert.match(html, /Diagnostic reasoning agent/);
+  assert.match(html, /Diagnostic reasoning/);
+  assert.match(html, /Frame the possibilities/);
+  assert.match(html, /Select the next test/);
+  assert.match(html, /Learn from the result/);
+  assert.match(html, /Exit with a governed outcome/);
   assert.match(html, /Structured RCA record/);
   assert.match(html, /CAPA and back-tracing close the learning loop/);
   assert.doesNotMatch(html, /Case paths/);
@@ -91,5 +98,7 @@ test("stakeholder overview is a complete standalone system blueprint", async () 
   assert.doesNotMatch(html, /\.rca-stage\{[^}]*background:var\(--color-navy\)/);
   assert.doesNotMatch(html, /\.reasoner\{[^}]*background:#102f50/);
   assert.match(html, /\.engine\{[^}]*border:1px solid var\(--color-border\)/);
-  assert.match(html, /\.reasoner\{[^}]*background:var\(--color-brand-soft\)/);
+  assert.match(html, /\.reasoner\{[^}]*background:var\(--color-white\)/);
+  assert.doesNotMatch(html, /Store operations happen inside Kimbal/);
+  assert.doesNotMatch(html, /How Kimbal receives/);
 });
