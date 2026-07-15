@@ -52,8 +52,23 @@ test("keeps the complete prototype and project assets wired", async () => {
     access(new URL("../public/evidence/meter-opened.png", import.meta.url)),
     access(new URL("../public/evidence/pcb-power-supply.png", import.meta.url)),
     access(new URL("../public/og.png", import.meta.url)),
+    access(new URL("../public/stakeholder-overview.html", import.meta.url)),
   ]);
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
   assert.doesNotMatch(page, /SkeletonPreview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
+});
+
+test("stakeholder overview is a complete standalone narrative", async () => {
+  const html = await readFile(new URL("../public/stakeholder-overview.html", import.meta.url), "utf8");
+  assert.match(html, /<!doctype html>/i);
+  assert.match(html, /Field failure[\s\S]*factory learning/i);
+  assert.match(html, /6,000/);
+  assert.match(html, /FFR-2026-04782/);
+  assert.match(html, /Nine connected product modules/);
+  assert.match(html, /Specialist agents/);
+  assert.match(html, /Foundation first/);
+  assert.match(html, /Run next test/);
+  assert.match(html, /evidence\/meter-exterior\.png/);
+  assert.match(html, /@media print/);
 });
