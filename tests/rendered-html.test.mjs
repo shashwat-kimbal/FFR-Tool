@@ -73,4 +73,10 @@ test("stakeholder overview is a complete standalone narrative", async () => {
   assert.match(html, /@media print/);
   assert.match(html, /HES integration is a later phase/);
   assert.match(html, /HES added here/);
+  assert.match(html, /Open any module to see its input, processing logic, output and handoff/);
+  assert.match(html, /<strong>Receives:<\/strong>/);
+  assert.match(html, /<strong>Works by:<\/strong>/);
+  assert.match(html, /<strong>Produces:<\/strong>/);
+  assert.match(html, /<strong>Hands off:<\/strong>/);
+  assert.match(html, /Each external system contributes a defined evidence contract/);
 });
