@@ -59,24 +59,24 @@ test("keeps the complete prototype and project assets wired", async () => {
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 });
 
-test("stakeholder overview is a complete standalone narrative", async () => {
+test("stakeholder overview is a complete standalone system blueprint", async () => {
   const html = await readFile(new URL("../public/stakeholder-overview.html", import.meta.url), "utf8");
   assert.match(html, /<!doctype html>/i);
-  assert.match(html, /One controlled flow[\s\S]*from return to learning/i);
-  assert.match(html, /6,000/);
+  assert.match(html, /What comes from where[\s\S]*What the system does next/i);
+  assert.match(html, /Which system provides which data/);
+  assert.match(html, /Sourcing \/ return creation/);
+  assert.match(html, /Store receipt & custody/);
+  assert.match(html, /Diagnostic analysis/);
+  assert.match(html, /CAPA & commercial closure/);
+  assert.match(html, /Back-tracing & learning/);
   assert.match(html, /FFR-2026-04782/);
-  assert.match(html, /Nine modules connected by one case state machine/);
-  assert.match(html, /Specialist agents/);
-  assert.match(html, /Foundation first/);
-  assert.match(html, /Run next test/);
-  assert.match(html, /evidence\/meter-exterior\.png/);
+  assert.match(html, /Cases & Intake/);
+  assert.match(html, /Store & Physical Tracking/);
+  assert.match(html, /Agentic Analysis/);
+  assert.match(html, /RCA, Reports & Approval/);
+  assert.match(html, /No fault reproduced/);
+  assert.match(html, /Identity mismatch, missing evidence, unsafe condition/);
   assert.match(html, /@media print/);
-  assert.match(html, /HES integration is a later phase/);
-  assert.match(html, /HES added here/);
-  assert.match(html, /Open any module to see its input, processing logic, output and handoff/);
-  assert.match(html, /<strong>Receives:<\/strong>/);
-  assert.match(html, /<strong>Works by:<\/strong>/);
-  assert.match(html, /<strong>Produces:<\/strong>/);
-  assert.match(html, /<strong>Hands off:<\/strong>/);
-  assert.match(html, /Each external system contributes a defined evidence contract/);
+  assert.match(html, /HES is intentionally not part of this initial trace/);
+  assert.match(html, /One case, three independent endings/);
 });
