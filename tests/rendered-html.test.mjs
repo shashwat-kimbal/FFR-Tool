@@ -78,4 +78,14 @@ test("stakeholder overview is a complete standalone system blueprint", async () 
   assert.doesNotMatch(html, /Case paths/);
   assert.match(html, /@media print/);
   assert.match(html, /HES is a later-phase addition/);
+  assert.match(html, /--type-display:/);
+  assert.match(html, /--type-section:/);
+  assert.match(html, /--type-title:/);
+  assert.match(html, /--type-body:/);
+  assert.match(html, /--type-supporting:/);
+  assert.match(html, /--type-label:/);
+  assert.doesNotMatch(html, /font-size:(?!var\()/);
+  assert.doesNotMatch(html, /font-weight:(?!var\()/);
+  assert.doesNotMatch(html, /letter-spacing:(?!var\()/);
+  assert.doesNotMatch(html, /line-height:(?!var\()/);
 });
