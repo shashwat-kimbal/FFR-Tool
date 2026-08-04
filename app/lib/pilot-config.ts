@@ -1,13 +1,42 @@
 import productMap from "../../rules/catalogues/product-family-map.v1.json";
 import issueCatalogue from "../../rules/catalogues/customer-issue-catalogue.v1.json";
 import complaintSynonyms from "../../rules/catalogues/complaint-synonyms.v1.json";
+import adapterMappings from "../../config/adapter-mappings.v1.json";
 import workbookContract from "../../config/pilot-workbook-contract.v1.json";
 import configurationDefaults from "../../config/pilot-configuration-defaults.v1.json";
 import diagnosticRuleTemplate from "../../config/diagnostic-rule-template.v1.json";
 import caseDisplay from "../../config/ffr-case-display.v1.json";
-import type { AppSettings, DiagnosticRule, ProductFamily } from "./pilot-types";
+import type { AdapterMapping, AppSettings, ComplaintMapping, DiagnosticRule, ProductFamily } from "./pilot-types";
 
 export const pilotContract = workbookContract;
+
+const configuredComplaintMappings = complaintSynonyms.mappings as Array<{
+  productFamily: ProductFamily;
+  phrases: string[];
+  classification: { categoryCode: string; subcategoryCode: string | null };
+  reason: string;
+}>;
+
+const configuredAdapterMappings = adapterMappings.mappings as Array<{
+  productFamily: ProductFamily;
+  adapterId: string;
+  evidenceMode: AdapterMapping["evidenceMode"];
+  description: string;
+}>;
+
+export const defaultComplaintMappings: ComplaintMapping[] = configuredComplaintMappings.map((mapping, index) => ({
+  id: `complaint-${index + 1}`,
+  productFamily: mapping.productFamily,
+  phrases: [...mapping.phrases],
+  categoryCode: mapping.classification.categoryCode,
+  subcategoryCode: mapping.classification.subcategoryCode,
+  reason: mapping.reason,
+}));
+
+export const defaultAdapterMappings: AdapterMapping[] = configuredAdapterMappings.map((mapping, index) => ({
+  id: `adapter-${index + 1}`,
+  ...mapping,
+}));
 
 export const defaultSettings: AppSettings = {
   productMappings: productMap.mappings.map((mapping, index) => ({
@@ -17,6 +46,8 @@ export const defaultSettings: AppSettings = {
     productFamily: mapping.productFamily as ProductFamily,
     basis: mapping.basis,
   })),
+  complaintMappings: defaultComplaintMappings.map((mapping) => ({ ...mapping, phrases: [...mapping.phrases] })),
+  adapterMappings: defaultAdapterMappings.map((mapping) => ({ ...mapping })),
   retentionDays: configurationDefaults.retentionDays,
   uploadMaxMb: configurationDefaults.uploadMaxMb,
   ai: { ...configurationDefaults.ai },
@@ -59,24 +90,23 @@ function normalise(value: string) {
   return value.trim().replace(/\s+/g, " ").toUpperCase();
 }
 
-export function classifyComplaint(productFamily: ProductFamily | null, phrases: string[]) {
+export function classifyComplaint(
+  productFamily: ProductFamily | null,
+  phrases: string[],
+  mappings: ComplaintMapping[] = defaultComplaintMappings,
+) {
   if (!productFamily) return null;
   const source = phrases.map(normalise).filter(Boolean);
-  const mappings = complaintSynonyms.mappings as Array<{
-    productFamily: string;
-    phrases: string[];
-    classification: { categoryCode: string; subcategoryCode: string | null };
-  }>;
   const match = mappings.find((mapping) =>
     mapping.productFamily === productFamily && mapping.phrases.some((phrase) => source.includes(normalise(phrase))),
   );
   if (!match) return { key: `${productFamily}:UNCLASSIFIED`, label: "Unclassified complaint" };
   const category = catalogueFamilies
     .find((family) => family.code === productFamily)
-    ?.categories.find((item) => item.code === match.classification.categoryCode);
-  const subcategory = category?.subcategories.find((item) => item.code === match.classification.subcategoryCode);
+    ?.categories.find((item) => item.code === match.categoryCode);
+  const subcategory = category?.subcategories.find((item) => item.code === match.subcategoryCode);
   return {
-    key: [productFamily, match.classification.categoryCode, match.classification.subcategoryCode].filter(Boolean).join(":"),
+    key: [productFamily, match.categoryCode, match.subcategoryCode].filter(Boolean).join(":"),
     label: subcategory?.name ?? category?.name ?? "Classified complaint",
   };
 }

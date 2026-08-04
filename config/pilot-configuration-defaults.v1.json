@@ -2,7 +2,7 @@
   "configId": "kimbal-ffr-pilot-defaults",
   "version": "1.0.0",
   "status": "draft_configurable",
-  "retentionDays": 365,
+  "retentionDays": 0,
   "uploadMaxMb": 50,
   "ai": {
     "provider": "Not configured",

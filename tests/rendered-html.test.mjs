@@ -50,7 +50,7 @@ test("keeps the configurable pilot and project assets wired", async () => {
   assert.match(page, /MULTIPLE_FFR_REGISTERS/);
   assert.match(parser, /canonicalField/);
   assert.match(parser, /imageMimeFromSignature/);
-  assert.match(parser, /Rows after detected Meter RTC data header/);
+  assert.match(parser, /inspectAdapterWorkbookStructure/);
   assert.match(layout, /generateMetadata/);
   assert.match(css, /--brand:/i);
   assert.match(packageJson, /"xlsx"/);

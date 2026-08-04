@@ -1,0 +1,1401 @@
+{
+  "id": "generic-provisional-v1",
+  "version": "1.0.0",
+  "title": "Generic provisional DLMS analysis bundle",
+  "lifecycle": "provisional_active",
+  "adapterId": "bcs-16-sheet-v1",
+  "profileId": "generic-provisional-v1",
+  "productFamilies": [
+    "METER",
+    "NIC",
+    "GATEWAY"
+  ],
+  "rules": [
+    {
+      "id": "DLMS-FND-001",
+      "group": "Foundation",
+      "title": "Expected workbook sheet coverage",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "workbook.expected_sheet_count",
+        "operator": "lt",
+        "value": 16
+      },
+      "why": "Confirms the submitted report contains the expected BCS workbook structure.",
+      "limitation": "A complete sheet count does not prove each table is compatible.",
+      "followUp": "Review missing-sheet list and adapter mapping."
+    },
+    {
+      "id": "DLMS-FND-002",
+      "group": "Foundation",
+      "title": "Mandatory sheet availability",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "high",
+      "expression": {
+        "fact": "workbook.mandatory_missing_count",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "Meter configuration, self-diagnostics, and instantaneous data are mandatory for this adapter.",
+      "limitation": "This is an input-quality gate, not a device diagnosis.",
+      "followUp": "Upload a complete compatible report."
+    },
+    {
+      "id": "DLMS-FND-003",
+      "group": "Foundation",
+      "title": "Profile source availability",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "workbook.profile_sheet_count",
+        "operator": "lt",
+        "value": 1
+      },
+      "why": "Profile evidence is needed for interval and consumption checks.",
+      "limitation": "A missing profile does not prove a meter fault.",
+      "followUp": "Obtain a report with at least one load or billing profile."
+    },
+    {
+      "id": "DLMS-FND-004",
+      "group": "Foundation",
+      "title": "Event source availability",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "workbook.event_sheet_count",
+        "operator": "lt",
+        "value": 1
+      },
+      "why": "Event history is required to assess contextual electrical stress and time-based anomalies.",
+      "limitation": "Empty event sheets can be valid; this only checks whether event sources exist.",
+      "followUp": "Check adapter coverage or retrieve an event-enabled report."
+    },
+    {
+      "id": "DLMS-FND-005",
+      "group": "Foundation",
+      "title": "Meter serial extraction",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "high",
+      "expression": {
+        "fact": "configuration.meter_serial",
+        "operator": "missing"
+      },
+      "why": "A technical report must expose a canonical meter serial before it can be attached to a case.",
+      "limitation": "This finding does not decide which FFR case owns the data.",
+      "followUp": "Configure the identity locator or obtain a supported report."
+    },
+    {
+      "id": "DLMS-FND-006",
+      "group": "Foundation",
+      "title": "Configuration content",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "configuration.non_empty_values",
+        "operator": "lt",
+        "value": 3
+      },
+      "why": "Basic configuration values support model-aware thresholds and evidence traceability.",
+      "limitation": "Configuration completeness is not a functional health test.",
+      "followUp": "Check the MeterConfiguration export."
+    },
+    {
+      "id": "DLMS-FND-007",
+      "group": "Foundation",
+      "title": "Meter model captured",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "configuration.model",
+        "operator": "missing"
+      },
+      "why": "Model and variant data allow future model-specific profiles to supersede generic limits.",
+      "limitation": "Generic provisional limits may still be used when the model is absent.",
+      "followUp": "Map the model field in adapter settings."
+    },
+    {
+      "id": "DLMS-FND-008",
+      "group": "Foundation",
+      "title": "Voltage reference available",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "configuration.rated_voltage",
+        "operator": "missing"
+      },
+      "why": "Rated voltage should ideally come from meter configuration instead of a generic profile.",
+      "limitation": "The provisional fallback remains clearly identified when this value is absent.",
+      "followUp": "Configure rated-voltage mapping for this model."
+    },
+    {
+      "id": "DLMS-FND-009",
+      "group": "Foundation",
+      "title": "Current reference available",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "configuration.rated_current",
+        "operator": "missing"
+      },
+      "why": "Rated current enables model-aware current plausibility checks.",
+      "limitation": "No current-overload conclusion is made without a configured rating.",
+      "followUp": "Configure rated-current mapping for this model."
+    },
+    {
+      "id": "DLMS-FND-010",
+      "group": "Foundation",
+      "title": "Units or scalers present",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "configuration.unit_or_scaler_tokens",
+        "operator": "lt",
+        "value": 1
+      },
+      "why": "Units and scalers reduce the risk of treating a mapped value as a physical reading.",
+      "limitation": "Presence alone does not validate every scaler.",
+      "followUp": "Review units/scalers in adapter settings."
+    },
+    {
+      "id": "DLMS-FND-011",
+      "group": "Foundation",
+      "title": "Self-diagnostic data available",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "self_diagnostic.status",
+        "operator": "missing"
+      },
+      "why": "Self-diagnostic flags are a primary source for display, battery, and health context.",
+      "limitation": "A present flag is not a component-level diagnosis.",
+      "followUp": "Retrieve the SelfDiagnostic sheet."
+    },
+    {
+      "id": "DLMS-FND-012",
+      "group": "Foundation",
+      "title": "Instantaneous data available",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "ip.voltage",
+        "operator": "missing"
+      },
+      "why": "Instantaneous readings provide the current electrical reference point.",
+      "limitation": "One instantaneous reading is not a historical trend.",
+      "followUp": "Retrieve the IP sheet."
+    },
+    {
+      "id": "DLMS-PRF-001",
+      "group": "Profile & data quality",
+      "title": "Block-load records available",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "profile.record_count",
+        "operator": "lt",
+        "parameter": "minimum_profile_records"
+      },
+      "why": "Checks that a populated block-load profile was found.",
+      "limitation": "Record presence does not prove the profile is complete.",
+      "followUp": "Retrieve the block-load profile."
+    },
+    {
+      "id": "DLMS-PRF-002",
+      "group": "Profile & data quality",
+      "title": "Profile timestamp parsing",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "profile.unparseable_timestamp_count",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "Checks timestamps before interval and chronology calculations are trusted.",
+      "limitation": "Only detected profile rows are evaluated.",
+      "followUp": "Review date/time format in the adapter."
+    },
+    {
+      "id": "DLMS-PRF-003",
+      "group": "Profile & data quality",
+      "title": "Profile interval determined",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "profile.interval_minutes",
+        "operator": "missing"
+      },
+      "why": "A known interval is required to assess gaps and expected data density.",
+      "limitation": "Fallback interval is not substituted as observed evidence.",
+      "followUp": "Confirm interval mapping for this model."
+    },
+    {
+      "id": "DLMS-PRF-004",
+      "group": "Profile & data quality",
+      "title": "Duplicate profile intervals",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "profile.duplicate_interval_count",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "Duplicate records can distort energy and trend calculations.",
+      "limitation": "This does not identify why a duplicate exists.",
+      "followUp": "Review raw profile export."
+    },
+    {
+      "id": "DLMS-PRF-005",
+      "group": "Profile & data quality",
+      "title": "Out-of-order profile intervals",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "profile.out_of_order_count",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "Chronological ordering is required for interval-based evidence.",
+      "limitation": "Ordering may be an export artifact.",
+      "followUp": "Review source ordering and adapter settings."
+    },
+    {
+      "id": "DLMS-PRF-006",
+      "group": "Profile & data quality",
+      "title": "Long profile gaps",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "profile.long_gap_count",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "A long interval gap weakens any conclusion that relies on continuous history.",
+      "limitation": "A gap does not establish a communication or meter fault.",
+      "followUp": "Obtain the missing period or validate data retrieval."
+    },
+    {
+      "id": "DLMS-PRF-007",
+      "group": "Profile & data quality",
+      "title": "Profile window completeness",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "profile.window_days",
+        "operator": "lt",
+        "parameter": "minimum_profile_window_days"
+      },
+      "why": "Trend-dependent checks need a sufficient time window.",
+      "limitation": "Short windows are valid evidence but have limited diagnostic depth.",
+      "followUp": "Retrieve a longer period when trend analysis is needed."
+    },
+    {
+      "id": "DLMS-PRF-008",
+      "group": "Profile & data quality",
+      "title": "Profile voltage data available",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "profile.voltage_min",
+        "operator": "missing"
+      },
+      "why": "Voltage distribution requires a recognizable profile voltage column.",
+      "limitation": "Instantaneous voltage is still evaluated separately.",
+      "followUp": "Map the profile voltage column."
+    },
+    {
+      "id": "DLMS-PRF-009",
+      "group": "Profile & data quality",
+      "title": "Low profile voltage excursion",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:A:A1",
+        "METER:F",
+        "METER:S",
+        "METER:B",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "high",
+      "expression": {
+        "fact": "profile.voltage_min",
+        "operator": "outside",
+        "lowerParameter": "voltage_critical_lower_v",
+        "upperParameter": "voltage_critical_upper_v"
+      },
+      "why": "Flags a profile voltage value outside the provisional critical range.",
+      "limitation": "It supports electrical-stress investigation, not a component cause.",
+      "followUp": "Verify voltage source, nominal rating, and event history."
+    },
+    {
+      "id": "DLMS-PRF-010",
+      "group": "Profile & data quality",
+      "title": "High profile voltage excursion",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:A:A1",
+        "METER:F",
+        "METER:S",
+        "METER:B",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "high",
+      "expression": {
+        "fact": "profile.voltage_max",
+        "operator": "outside",
+        "lowerParameter": "voltage_critical_lower_v",
+        "upperParameter": "voltage_critical_upper_v"
+      },
+      "why": "Flags a profile voltage maximum outside the provisional critical range.",
+      "limitation": "The underlying source and duration must be reviewed.",
+      "followUp": "Verify voltage source, nominal rating, and event history."
+    },
+    {
+      "id": "DLMS-PRF-011",
+      "group": "Profile & data quality",
+      "title": "Profile median voltage",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "profile.voltage_median",
+        "operator": "outside",
+        "lowerParameter": "voltage_warning_lower_v",
+        "upperParameter": "voltage_warning_upper_v"
+      },
+      "why": "Flags sustained median voltage outside the provisional warning range.",
+      "limitation": "Does not prove supply origin or damage mechanism.",
+      "followUp": "Compare with configuration and available event history."
+    },
+    {
+      "id": "DLMS-PRF-012",
+      "group": "Profile & data quality",
+      "title": "Zero-voltage profile periods",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:S",
+        "METER:F",
+        "METER:B",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "profile.zero_voltage_count",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "Identifies zero-valued voltage intervals that may need correlation with power events.",
+      "limitation": "Zero can be a valid outage or mapping condition.",
+      "followUp": "Correlate with power-failure events and raw records."
+    },
+    {
+      "id": "DLMS-PRF-013",
+      "group": "Profile & data quality",
+      "title": "Profile current data available",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "profile.current_max",
+        "operator": "missing"
+      },
+      "why": "Current distribution supports abnormal-reading and loading context.",
+      "limitation": "Current alone does not determine accuracy.",
+      "followUp": "Map the profile current column."
+    },
+    {
+      "id": "DLMS-PRF-014",
+      "group": "Profile & data quality",
+      "title": "Zero-current profile periods",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:A:A2",
+        "METER:S",
+        "METER:C",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "profile.zero_current_count",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "Identifies zero-current periods for context.",
+      "limitation": "Zero current can be normal for no-load periods.",
+      "followUp": "Compare with voltage, load, and event context."
+    },
+    {
+      "id": "DLMS-PRF-015",
+      "group": "Profile & data quality",
+      "title": "Import register monotonicity",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:E",
+        "METER:A",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "profile.import_monotonicity_violations",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "Checks whether mapped import energy decreases between readings.",
+      "limitation": "Scaler or column mapping errors can mimic a physical anomaly.",
+      "followUp": "Validate register mapping and scaler before interpretation."
+    },
+    {
+      "id": "DLMS-PRF-016",
+      "group": "Profile & data quality",
+      "title": "Export register monotonicity",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:E",
+        "METER:A",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "profile.export_monotonicity_violations",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "Checks whether mapped export energy decreases between readings.",
+      "limitation": "Scaler or column mapping errors can mimic a physical anomaly.",
+      "followUp": "Validate register mapping and scaler before interpretation."
+    },
+    {
+      "id": "DLMS-PRF-017",
+      "group": "Profile & data quality",
+      "title": "Repeated profile values",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:E",
+        "METER:A",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "profile.repeated_value_run",
+        "operator": "gte",
+        "parameter": "repeated_reading_run"
+      },
+      "why": "Flags a long repeated numeric run that could be an export or mapping signal.",
+      "limitation": "A repeated value is not automatically an impossible physical reading.",
+      "followUp": "Review raw records and meter behavior."
+    },
+    {
+      "id": "DLMS-PRF-018",
+      "group": "Profile & data quality",
+      "title": "Profile versus register consistency",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:E",
+        "METER:A",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "profile.register_consistency_available",
+        "operator": "equals",
+        "value": false
+      },
+      "why": "Signals that comparable profile/register fields were not available for reconciliation.",
+      "limitation": "This is a coverage gap rather than an anomaly.",
+      "followUp": "Configure compatible profile and register fields."
+    },
+    {
+      "id": "DLMS-EVT-001",
+      "group": "Events",
+      "title": "Voltage-event source available",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "event.voltage_source_available",
+        "operator": "equals",
+        "value": false
+      },
+      "why": "Voltage-event history supports electrical-stress context.",
+      "limitation": "No event source does not prove no events occurred.",
+      "followUp": "Confirm voltage event export."
+    },
+    {
+      "id": "DLMS-EVT-002",
+      "group": "Events",
+      "title": "Power-event source available",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "event.power_source_available",
+        "operator": "equals",
+        "value": false
+      },
+      "why": "Power-event history supports outage and restoration context.",
+      "limitation": "No event source does not prove no events occurred.",
+      "followUp": "Confirm power event export."
+    },
+    {
+      "id": "DLMS-EVT-003",
+      "group": "Events",
+      "title": "Recurring overvoltage events",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:A:A1",
+        "METER:B",
+        "METER:F",
+        "METER:S",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "high",
+      "expression": {
+        "fact": "event.over_voltage.count",
+        "operator": "gte",
+        "parameter": "recurrent_event_count"
+      },
+      "why": "Repeated overvoltage records provide provisional electrical-stress context.",
+      "limitation": "Event count does not identify a failed component or origin.",
+      "followUp": "Review event timestamps, voltage profile, and physical evidence."
+    },
+    {
+      "id": "DLMS-EVT-004",
+      "group": "Events",
+      "title": "Recurring undervoltage events",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:A:A1",
+        "METER:F",
+        "METER:S",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "event.under_voltage.count",
+        "operator": "gte",
+        "parameter": "recurrent_event_count"
+      },
+      "why": "Repeated undervoltage records provide supply-quality context.",
+      "limitation": "This is not proof of a meter internal failure.",
+      "followUp": "Review event timestamps and supply conditions."
+    },
+    {
+      "id": "DLMS-EVT-005",
+      "group": "Events",
+      "title": "Recurring power-failure events",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:F",
+        "METER:S",
+        "METER:B",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "event.power_failure.count",
+        "operator": "gte",
+        "parameter": "recurrent_event_count"
+      },
+      "why": "Repeated power-failure records provide outage and stress context.",
+      "limitation": "Counts alone do not establish whether a device or grid condition initiated the event.",
+      "followUp": "Review occurrence/restoration sequence."
+    },
+    {
+      "id": "DLMS-EVT-006",
+      "group": "Events",
+      "title": "Recurring current-reversal events",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:T:T9",
+        "METER:E",
+        "METER:A",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "event.current_reverse.count",
+        "operator": "gte",
+        "parameter": "recurrent_event_count"
+      },
+      "why": "Repeated current-reversal events provide tamper or wiring context.",
+      "limitation": "They do not prove tampering or liability.",
+      "followUp": "Validate event detail and field wiring evidence."
+    },
+    {
+      "id": "DLMS-EVT-007",
+      "group": "Events",
+      "title": "Recurring low-PF events",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:A:A3",
+        "METER:E",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "event.low_pf.count",
+        "operator": "gte",
+        "parameter": "recurrent_event_count"
+      },
+      "why": "Repeated low-PF events can support a load-quality investigation.",
+      "limitation": "Low PF is only interpretable with sufficient load context.",
+      "followUp": "Check active power and load conditions."
+    },
+    {
+      "id": "DLMS-EVT-008",
+      "group": "Events",
+      "title": "Event occurrence/restoration pairing",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "event.unpaired_count",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "Unpaired event transitions weaken duration and chronology interpretation.",
+      "limitation": "Not every vendor format exposes occurrence/restoration labels.",
+      "followUp": "Review source event format or configure pairing columns."
+    },
+    {
+      "id": "DLMS-EVT-009",
+      "group": "Events",
+      "title": "Event chronology available",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "event.timestamp_count",
+        "operator": "lt",
+        "value": 1
+      },
+      "why": "Time evidence is needed to relate events to the reported complaint period.",
+      "limitation": "A timestamp count alone does not establish defect chronology.",
+      "followUp": "Configure event timestamp mapping."
+    },
+    {
+      "id": "DLMS-EVT-010",
+      "group": "Events",
+      "title": "RTC transaction pattern",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:R",
+        "METER:F",
+        "METER:S",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "event.rtc_change.count",
+        "operator": "gte",
+        "parameter": "recurrent_event_count"
+      },
+      "why": "Repeated RTC transactions can support an RTC-history investigation.",
+      "limitation": "It does not quantify clock drift by itself.",
+      "followUp": "Compare meter RTC against retrieval time and configuration."
+    },
+    {
+      "id": "DLMS-EVT-011",
+      "group": "Events",
+      "title": "Programming transaction evidence",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:E",
+        "METER:A",
+        "METER:C",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "ip.programming_count",
+        "operator": "missing"
+      },
+      "why": "Programming history is contextual evidence for configuration-related investigations.",
+      "limitation": "A cumulative count is not a fault without a baseline.",
+      "followUp": "Establish a baseline or compare sequential reports."
+    },
+    {
+      "id": "DLMS-EVT-012",
+      "group": "Events",
+      "title": "Connect/disconnect history",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:O",
+        "METER:C",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "event.connect_disconnect_available",
+        "operator": "equals",
+        "value": false
+      },
+      "why": "Connect/disconnect events are contextual evidence for output and communication complaints.",
+      "limitation": "Absence may reflect adapter mapping rather than device behavior.",
+      "followUp": "Map control-event values for this model."
+    },
+    {
+      "id": "DLMS-EVT-013",
+      "group": "Events",
+      "title": "Load-limit history",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:O",
+        "METER:E",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "event.load_limit_available",
+        "operator": "equals",
+        "value": false
+      },
+      "why": "Load-limit events provide context for output and billing investigations.",
+      "limitation": "This does not confirm relay operation.",
+      "followUp": "Map load-limit event values for this model."
+    },
+    {
+      "id": "DLMS-EVT-014",
+      "group": "Events",
+      "title": "Tamper-event context",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:T",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "event.tamper.count",
+        "operator": "gt",
+        "value": 0
+      },
+      "why": "Detected tamper-labelled records provide a traceable context signal.",
+      "limitation": "A label does not establish intent or liability.",
+      "followUp": "Review the individual tamper event records."
+    },
+    {
+      "id": "DLMS-EVT-015",
+      "group": "Events",
+      "title": "Electrical-stress event pattern",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "high",
+      "expression": {
+        "fact": "derived.electrical_stress_score",
+        "operator": "gte",
+        "parameter": "recurrent_event_count"
+      },
+      "why": "Combines recurrent electrical-event counts into provisional context for physical and availability complaints.",
+      "limitation": "It cannot determine a burn location, physical damage, or root cause.",
+      "followUp": "Review electrical events with physical inspection evidence."
+    },
+    {
+      "id": "DLMS-CTX-001",
+      "group": "Complaint context",
+      "title": "Self-diagnostic health flag",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "self_diagnostic.status",
+        "operator": "not_equals",
+        "value": "OK"
+      },
+      "why": "Uses the meter's exported overall diagnostic flag as provisional health context.",
+      "limitation": "An overall status does not identify a component-level cause.",
+      "followUp": "Review individual diagnostic flags and physical evidence."
+    },
+    {
+      "id": "DLMS-CTX-002",
+      "group": "Complaint context",
+      "title": "RTC battery diagnostic",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:R",
+        "METER:F",
+        "METER:S",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "self_diagnostic.rtc_battery",
+        "operator": "equals",
+        "value": false
+      },
+      "why": "A failed RTC battery flag supports an RTC or power-domain investigation.",
+      "limitation": "It is not a confirmation of the observed complaint.",
+      "followUp": "Validate with direct RTC and battery test."
+    },
+    {
+      "id": "DLMS-CTX-003",
+      "group": "Complaint context",
+      "title": "Main battery diagnostic",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:F",
+        "METER:S",
+        "METER:D",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "self_diagnostic.main_battery",
+        "operator": "equals",
+        "value": false
+      },
+      "why": "A failed main-battery flag supports a display or availability investigation.",
+      "limitation": "It cannot confirm display hardware or a failed component.",
+      "followUp": "Inspect display/supply condition and perform direct validation."
+    },
+    {
+      "id": "DLMS-CTX-004",
+      "group": "Complaint context",
+      "title": "Instantaneous voltage outside warning band",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:A:A1",
+        "METER:F",
+        "METER:S",
+        "METER:B",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "ip.voltage",
+        "operator": "outside",
+        "lowerParameter": "voltage_warning_lower_v",
+        "upperParameter": "voltage_warning_upper_v"
+      },
+      "why": "Compares the instantaneous voltage to the editable provisional warning band.",
+      "limitation": "One reading is not a sustained supply-quality conclusion.",
+      "followUp": "Compare with profile distribution and voltage events."
+    },
+    {
+      "id": "DLMS-CTX-005",
+      "group": "Complaint context",
+      "title": "Instantaneous current zero",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:A:A2",
+        "METER:S",
+        "METER:C",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "ip.phase_current",
+        "operator": "equals",
+        "value": 0
+      },
+      "why": "Records zero current as contextual evidence for load and availability investigations.",
+      "limitation": "Zero current can be normal at no load.",
+      "followUp": "Compare with voltage and service/load context."
+    },
+    {
+      "id": "DLMS-CTX-006",
+      "group": "Complaint context",
+      "title": "Low PF at meaningful load",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:A:A3",
+        "METER:E",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "all": [
+          {
+            "fact": "ip.active_power",
+            "operator": "gte",
+            "parameter": "minimum_power_for_pf_w"
+          },
+          {
+            "fact": "ip.power_factor_abs",
+            "operator": "lt",
+            "parameter": "low_pf_limit"
+          }
+        ]
+      },
+      "why": "Assesses PF only when the available active-power reading meets the editable minimum.",
+      "limitation": "Requires compatible active-power mapping; it is not an accuracy conclusion.",
+      "followUp": "Review load and power measurements."
+    },
+    {
+      "id": "DLMS-CTX-007",
+      "group": "Complaint context",
+      "title": "Display / no-display electrical context",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:D",
+        "METER:F",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "any": [
+          {
+            "fact": "self_diagnostic.main_battery",
+            "operator": "equals",
+            "value": false
+          },
+          {
+            "fact": "self_diagnostic.status",
+            "operator": "not_equals",
+            "value": "OK"
+          }
+        ]
+      },
+      "why": "Uses existing diagnostic evidence to prioritize a display/power-domain inspection.",
+      "limitation": "DLMS cannot observe display pixels, backlight, or button mechanics.",
+      "followUp": "Inspect the display and supply region."
+    },
+    {
+      "id": "DLMS-CTX-008",
+      "group": "Complaint context",
+      "title": "Meter-dead electrical context",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:S",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "high",
+      "expression": {
+        "all": [
+          {
+            "fact": "self_diagnostic.status",
+            "operator": "not_equals",
+            "value": "OK"
+          },
+          {
+            "fact": "ip.phase_current",
+            "operator": "equals",
+            "value": 0
+          }
+        ]
+      },
+      "why": "Combines poor diagnostic status with zero current as a provisional availability signal.",
+      "limitation": "It cannot prove a dead meter without direct communication and physical tests.",
+      "followUp": "Perform direct communication and supply validation."
+    },
+    {
+      "id": "DLMS-CTX-009",
+      "group": "Complaint context",
+      "title": "Communication contextual coverage",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "METER:C",
+        "NIC:C",
+        "GATEWAY:C",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "communication.evidence_available",
+        "operator": "equals",
+        "value": false
+      },
+      "why": "Makes explicit when a meter DLMS report lacks direct communications/heartbeat evidence.",
+      "limitation": "Meter DLMS is contextual only for NIC/Gateway communication health.",
+      "followUp": "Upload the NIC/Gateway communication report or validate manually."
+    },
+    {
+      "id": "DLMS-CTX-010",
+      "group": "Complaint context",
+      "title": "Abnormal-reading contextual coverage",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:E",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "profile.energy_jump_available",
+        "operator": "equals",
+        "value": false
+      },
+      "why": "Makes visible whether the report contains enough compatible energy data for jump analysis.",
+      "limitation": "No conclusion is made if the required energy series is absent.",
+      "followUp": "Map energy registers and profile increments."
+    },
+    {
+      "id": "DLMS-CTX-011",
+      "group": "Complaint context",
+      "title": "Accuracy voltage context",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:A:A1",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "ip.voltage",
+        "operator": "outside",
+        "lowerParameter": "voltage_warning_lower_v",
+        "upperParameter": "voltage_warning_upper_v"
+      },
+      "why": "Flags a voltage reading outside the editable preliminary range.",
+      "limitation": "This is not a calibrated accuracy test.",
+      "followUp": "Validate with a traceable reference instrument."
+    },
+    {
+      "id": "DLMS-CTX-012",
+      "group": "Complaint context",
+      "title": "RTC drift measurement coverage",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:R",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "rtc.drift_minutes_per_year",
+        "operator": "missing"
+      },
+      "why": "Shows whether source timestamps support a drift calculation.",
+      "limitation": "RTC event count is not a drift measurement.",
+      "followUp": "Provide meter and retrieval timestamps with a defined reference period."
+    },
+    {
+      "id": "DLMS-CTX-013",
+      "group": "Complaint context",
+      "title": "Tamper contextual finding",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:T",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "warning",
+      "expression": {
+        "fact": "event.current_reverse.count",
+        "operator": "gte",
+        "parameter": "recurrent_event_count"
+      },
+      "why": "Uses recurrent reversal events as traceable tamper/wiring context.",
+      "limitation": "This does not determine intent, mechanism, or liability.",
+      "followUp": "Review detailed event and field inspection evidence."
+    },
+    {
+      "id": "DLMS-CTX-014",
+      "group": "Complaint context",
+      "title": "Output / relay contextual coverage",
+      "productFamilies": [
+        "METER"
+      ],
+      "complaintKeys": [
+        "METER:O",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "info",
+      "expression": {
+        "fact": "event.load_limit_available",
+        "operator": "equals",
+        "value": false
+      },
+      "why": "Shows whether the current report can provide load-limit or output context.",
+      "limitation": "DLMS cannot prove a relay mechanical condition from this evidence alone.",
+      "followUp": "Map relay/load-limit events and perform manual test."
+    },
+    {
+      "id": "DLMS-CTX-015",
+      "group": "Complaint context",
+      "title": "Burnt or physical-damage electrical context",
+      "productFamilies": [
+        "METER",
+        "NIC",
+        "GATEWAY"
+      ],
+      "complaintKeys": [
+        "METER:B",
+        "METER:M",
+        "NIC:M",
+        "GATEWAY:B",
+        "GATEWAY:M",
+        "*"
+      ],
+      "enabled": true,
+      "severity": "high",
+      "expression": {
+        "fact": "derived.electrical_stress_score",
+        "operator": "gte",
+        "parameter": "recurrent_event_count"
+      },
+      "why": "Uses recurring electrical events to prioritize inspection for a reported burnt or damaged device.",
+      "limitation": "DLMS cannot locate a burn, confirm physical damage, or identify root cause.",
+      "followUp": "Inspect terminal/body/PCB evidence and validate manually."
+    }
+  ],
+  "summary": "60 configurable, source-linked DLMS checks. Findings are provisional and require review.",
+  "limitation": "No rule in this bundle creates an approved RCA/CAPA or proves a component-level root cause."
+}

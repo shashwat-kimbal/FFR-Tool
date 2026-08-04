@@ -1,0 +1,34 @@
+{
+  "id": "generic-provisional-v1",
+  "version": "1.0.0",
+  "title": "Generic provisional electrical profile",
+  "status": "provisional",
+  "parameters": {
+    "nominal_voltage_v": 230,
+    "voltage_warning_percent": 10,
+    "voltage_critical_percent": 20,
+    "expected_interval_minutes": 30,
+    "long_gap_intervals": 2,
+    "minimum_profile_window_days": 7,
+    "recurrent_event_count": 3,
+    "low_pf_limit": 0.8,
+    "minimum_power_for_pf_w": 200,
+    "rtc_drift_minutes_per_year": 7,
+    "minimum_profile_records": 1,
+    "repeated_reading_run": 8
+  },
+  "descriptions": {
+    "nominal_voltage_v": "Nominal phase voltage used when the meter configuration does not provide a usable rated voltage.",
+    "voltage_warning_percent": "Relative voltage deviation that creates a provisional warning.",
+    "voltage_critical_percent": "Relative voltage deviation that creates a provisional high-severity electrical-stress signal.",
+    "expected_interval_minutes": "Expected profile interval when the workbook does not make it determinable.",
+    "long_gap_intervals": "Number of expected intervals that constitutes a long profile gap.",
+    "minimum_profile_window_days": "Minimum profile window before trend-dependent checks are considered complete.",
+    "recurrent_event_count": "Number of comparable events that makes a pattern recurrent.",
+    "low_pf_limit": "Power-factor boundary used only when power evidence is sufficient.",
+    "minimum_power_for_pf_w": "Minimum active power at which low PF is interpreted.",
+    "rtc_drift_minutes_per_year": "Provisional RTC drift limit; edit for model-specific use.",
+    "minimum_profile_records": "Minimum non-empty block-load records needed for profile checks.",
+    "repeated_reading_run": "Repeated-value run length treated as a possible mapping or data-quality anomaly."
+  }
+}

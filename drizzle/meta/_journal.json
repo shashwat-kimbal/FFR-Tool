@@ -1,5 +1,20 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1785840379541,
+      "tag": "0000_silky_umar",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1785843897177,
+      "tag": "0001_nostalgic_secret_warriors",
+      "breakpoints": true
+    }
+  ]
 }

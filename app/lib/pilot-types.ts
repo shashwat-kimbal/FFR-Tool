@@ -15,7 +15,7 @@ export type IntakeException =
   | "UNRECOGNIZED_FILE"
   | "IDENTITY_NO_MATCH";
 
-export type RuleStatus = "draft" | "active" | "retired";
+export type RuleStatus = "draft" | "in_review" | "active" | "provisional_active" | "approved_active" | "retired";
 
 export type RuleOperator = "exists" | "equals" | "gte" | "lte";
 
@@ -27,8 +27,35 @@ export interface ProductFamilyMapping {
   basis: string;
 }
 
+/**
+ * Complaint wording is configuration data. It is seeded from the supplied
+ * catalogue, persisted with shared Settings, and never inferred by an AI.
+ */
+export interface ComplaintMapping {
+  id: string;
+  productFamily: ProductFamily;
+  phrases: string[];
+  categoryCode: string;
+  subcategoryCode: string | null;
+  reason: string;
+}
+
+/**
+ * Declares whether an uploaded BCS/DLMS workbook is direct evidence for a
+ * product family or merely Meter context pending a dedicated adapter.
+ */
+export interface AdapterMapping {
+  id: string;
+  productFamily: ProductFamily;
+  adapterId: string;
+  evidenceMode: "direct" | "context_only";
+  description: string;
+}
+
 export interface AppSettings {
   productMappings: ProductFamilyMapping[];
+  complaintMappings: ComplaintMapping[];
+  adapterMappings: AdapterMapping[];
   retentionDays: number;
   uploadMaxMb: number;
   ai: {
@@ -120,6 +147,7 @@ export interface DlmsInspection {
   expectedMeterId: string;
   identityState: "READY_TO_ANALYZE" | "IDENTITY_NO_MATCH" | "AWAITING_FILES";
   features: DerivedFeature[];
+  analysis?: import("./dlms-analysis").DlmsAnalysis;
   messages: string[];
 }
 
