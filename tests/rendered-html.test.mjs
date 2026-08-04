@@ -21,26 +21,32 @@ test("server-renders the configurable FFR pilot", async () => {
   assert.match(html, /<title>Kimbal FFR Intelligence<\/title>/i);
   assert.match(html, /Kimbal/);
   assert.match(html, /FFR Intelligence/);
-  assert.match(html, /New FFR analysis/);
-  assert.match(html, /File-first pilot/);
-  assert.match(html, /Rule library/);
-  assert.match(html, /Originals remain unchanged/);
-  assert.match(html, /og-v2\.png/);
+  assert.match(html, /Register-first case intake/);
+  assert.match(html, /FFR register/);
+  assert.match(html, /Case and meter/);
+  assert.match(html, /Rule bundle/);
+  assert.match(html, /Development proof of concept/);
+  assert.doesNotMatch(html, /og-v2\.png/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|Codex is working/i);
 });
 
 test("keeps the configurable pilot and project assets wired", async () => {
-  const [page, layout, css, packageJson] = await Promise.all([
+  const [page, parser, layout, css, packageJson] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/workbook-parser.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
-  assert.match(page, /inspectFiles/);
-  assert.match(page, /evaluateRules/);
+  assert.match(page, /inspectFfrRegister/);
+  assert.match(page, /inspectDlmsWorkbook/);
+  assert.match(page, /inspectImageEvidence/);
   assert.match(page, /READY_TO_ANALYZE/);
-  assert.match(page, /No source file has been changed/);
-  assert.match(page, /Editable RCA and CAPA templates/);
+  assert.match(page, /Upload the Kimbal logo/);
+  assert.match(page, /MULTIPLE_FFR_REGISTERS/);
+  assert.match(parser, /canonicalField/);
+  assert.match(parser, /imageMimeFromSignature/);
+  assert.match(parser, /Rows after detected Meter RTC data header/);
   assert.match(layout, /generateMetadata/);
   assert.match(css, /--brand:/i);
   assert.match(packageJson, /"xlsx"/);

@@ -1,44 +1,51 @@
 "use client";
+/* Browser-uploaded data URLs cannot be routed through the framework image optimizer. */
+/* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import {
   AlertTriangle,
   BookOpenCheck,
-  Bot,
   CheckCircle2,
   ChevronRight,
-  CircleAlert,
   ClipboardList,
   Download,
-  FileCheck2,
+  FileImage,
   FileSpreadsheet,
-  ImageIcon,
   Info,
   Layers3,
-  LoaderCircle,
-  Plus,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
   Upload,
   X,
 } from "lucide-react";
-import { complaintOptions, defaultSettings, productFamilyOptions, ruleTemplate } from "./lib/pilot-config";
-import { evaluateRules } from "./lib/rule-engine";
-import { inspectFiles } from "./lib/workbook-parser";
-import type { AnalysisPackage, AppSettings, DiagnosticRule, ProductFamily, RuleOperator } from "./lib/pilot-types";
+import { caseDisplayGroups, defaultSettings, pilotContract, productFamilyOptions, ruleTemplate } from "./lib/pilot-config";
+import {
+  classifyFfrCase,
+  canonicalField,
+  ffrValue,
+  inspectDlmsWorkbook,
+  inspectFfrRegister,
+  inspectImageEvidence,
+} from "./lib/workbook-parser";
+import type { AppSettings, DiagnosticRule, DlmsInspection, FfrRegisterInspection, FfrRow, ImageInspection, ProductFamily, UploadedArtifact } from "./lib/pilot-types";
 
-type Page = "analysis" | "history" | "rules" | "settings";
+type Page = "analysis" | "session" | "rules" | "settings";
+type MeterRole = "old" | "new";
 
-const navigation: Array<{ id: Page; label: string; icon: typeof Upload; description: string }> = [
-  { id: "analysis", label: "New analysis", icon: Upload, description: "File-first pilot" },
-  { id: "history", label: "Analysis history", icon: ClipboardList, description: "Runs and exceptions" },
-  { id: "rules", label: "Rule library", icon: BookOpenCheck, description: "Versioned diagnostic knowledge" },
-  { id: "settings", label: "Settings", icon: Settings, description: "Configuration and templates" },
+const localConfigurationKey = "kimbal-ffr-pilot-configuration-v2";
+const meterRoles: Array<{ id: MeterRole; field: string; title: string; description: string }> = [
+  { id: "old", field: pilotContract.ffrRegister.identityMatch.fieldsInOrder[0], title: "Defective / old meter", description: "Use when the returned failed meter is the evidence subject." },
+  { id: "new", field: pilotContract.ffrRegister.identityMatch.fieldsInOrder[1], title: "Replacement / new meter", description: "Use when evidence relates to the installed replacement meter." },
 ];
 
-const formatSize = (bytes: number) => `${Math.max(1, Math.round(bytes / 1024 / 1024))} MB`;
-const localConfigurationKey = "kimbal-ffr-pilot-configuration-v1";
+const navigation: Array<{ id: Page; label: string; icon: typeof Upload; description: string }> = [
+  { id: "analysis", label: "Case intake", icon: Upload, description: "Register-first workflow" },
+  { id: "session", label: "Current session", icon: ClipboardList, description: "Not persistent history" },
+  { id: "rules", label: "Rule bundle", icon: BookOpenCheck, description: "Read-only pilot state" },
+  { id: "settings", label: "Settings", icon: Settings, description: "Local configuration" },
+];
 
 function Status({ tone = "neutral", children }: { tone?: "neutral" | "good" | "warning" | "danger" | "ai"; children: ReactNode }) {
   return <span className={`status status-${tone}`}><span />{children}</span>;
@@ -59,116 +66,206 @@ function SectionHead({ eyebrow, title, description, action }: { eyebrow?: string
   </div>;
 }
 
-function stateLabel(state: AnalysisPackage["identityState"]) {
-  return state.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+function formatSize(bytes: number) {
+  return `${Math.max(1, Math.round(bytes / 1024 / 1024))} MB`;
 }
 
-function interpolate(template: string, values: Record<string, string>) {
-  return template.replace(/{{(.*?)}}/g, (_, token: string) => values[token.trim()] ?? "Not established from supplied evidence");
+function truncateHash(hash: string | null) {
+  return hash ? `${hash.slice(0, 12)}…${hash.slice(-8)}` : "Hash unavailable in this browser";
 }
 
 function defaultRuleDraft(): DiagnosticRule {
   return { ...ruleTemplate, conditions: ruleTemplate.conditions.map((condition) => ({ ...condition })) };
 }
 
+function hydrateSettings(candidate: Partial<AppSettings> | undefined): AppSettings {
+  return {
+    ...defaultSettings,
+    ...candidate,
+    productMappings: candidate?.productMappings ?? defaultSettings.productMappings,
+    ai: { ...defaultSettings.ai, ...candidate?.ai },
+    pilotAccess: { ...defaultSettings.pilotAccess, ...candidate?.pilotAccess, approvedRoles: candidate?.pilotAccess?.approvedRoles ?? defaultSettings.pilotAccess.approvedRoles },
+    branding: { ...defaultSettings.branding, ...candidate?.branding },
+  };
+}
+
 function loadStoredConfiguration(): { settings: AppSettings; rules: DiagnosticRule[] } | null {
   if (typeof window === "undefined") return null;
   try {
-    const saved = window.localStorage.getItem(localConfigurationKey);
+    const saved = window.localStorage.getItem(localConfigurationKey) ?? window.localStorage.getItem("kimbal-ffr-pilot-configuration-v1");
     if (!saved) return null;
-    const parsed = JSON.parse(saved) as { settings?: AppSettings; rules?: DiagnosticRule[] };
-    return parsed.settings && Array.isArray(parsed.rules) ? { settings: parsed.settings, rules: parsed.rules } : null;
+    const parsed = JSON.parse(saved) as { settings?: Partial<AppSettings>; rules?: DiagnosticRule[] };
+    return parsed.settings ? { settings: hydrateSettings(parsed.settings), rules: Array.isArray(parsed.rules) ? parsed.rules : [defaultRuleDraft()] } : null;
   } catch {
     window.localStorage.removeItem(localConfigurationKey);
     return null;
   }
 }
 
-export default function Home() {
+function ArtifactSummary({ artifact }: { artifact: UploadedArtifact }) {
+  const icon = artifact.kind === "IMAGE" ? <FileImage size={18} /> : <FileSpreadsheet size={18} />;
+  return <article className="artifact-card">
+    <span className={`artifact-icon artifact-${artifact.kind.toLowerCase()}`}>{icon}</span>
+    <div><strong title={artifact.name}>{artifact.name}</strong><small>{artifact.detail}</small></div>
+    <Status tone={artifact.kind === "UNRECOGNIZED" ? "danger" : "good"}>{artifact.kind.replaceAll("_", " ")}</Status>
+    <small>{formatSize(artifact.size)} · SHA-256 {truncateHash(artifact.sha256)}</small>
+  </article>;
+}
+
+function UploadStage({ title, description, buttonText, accept, multiple = false, disabled = false, onChange, children }: { title: string; description: string; buttonText: string; accept: string; multiple?: boolean; disabled?: boolean; onChange: (event: ChangeEvent<HTMLInputElement>) => void; children?: ReactNode }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  return <Card className="stage-card">
+    <SectionHead title={title} description={description} />
+    <button className="drop-zone stage-upload" disabled={disabled} onClick={() => inputRef.current?.click()}>
+      <span className="drop-icon"><Upload size={23} /></span>
+      <strong>{buttonText}</strong>
+      <span>{multiple ? "You may select several image files." : "Select one workbook only for this stage."}</span>
+      <em>{disabled ? "Complete the previous stage first" : "Select file"}</em>
+    </button>
+    <input ref={inputRef} className="visually-hidden" type="file" accept={accept} multiple={multiple} disabled={disabled} onChange={onChange} />
+    {children}
+  </Card>;
+}
+
+export default function Home() {
   const [page, setPage] = useState<Page>("analysis");
-  const [settings, setSettings] = useState<AppSettings>(() => loadStoredConfiguration()?.settings ?? defaultSettings);
-  const [rules, setRules] = useState<DiagnosticRule[]>(() => loadStoredConfiguration()?.rules ?? [defaultRuleDraft()]);
-  const [analysis, setAnalysis] = useState<AnalysisPackage | null>(null);
-  const [analysisStarted, setAnalysisStarted] = useState(false);
-  const [loadingFiles, setLoadingFiles] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>(() => loadStoredConfiguration()?.settings ?? hydrateSettings(defaultSettings));
+  const [rules] = useState<DiagnosticRule[]>(() => loadStoredConfiguration()?.rules ?? [defaultRuleDraft()]);
+  const [register, setRegister] = useState<FfrRegisterInspection | null>(null);
+  const [selectedRowNumber, setSelectedRowNumber] = useState<number | null>(null);
+  const [meterRole, setMeterRole] = useState<MeterRole>("old");
+  const [dlms, setDlms] = useState<DlmsInspection | null>(null);
+  const [images, setImages] = useState<ImageInspection | null>(null);
+  const [busyStage, setBusyStage] = useState<"ffr" | "dlms" | "images" | null>(null);
   const [notice, setNotice] = useState("");
+  const [intakeError, setIntakeError] = useState("");
   const [mappingValue, setMappingValue] = useState("");
   const [mappingField, setMappingField] = useState<"Meter type" | "Old_Meter_Type">("Old_Meter_Type");
   const [mappingFamily, setMappingFamily] = useState<ProductFamily>("METER");
-  const [draftRule, setDraftRule] = useState<DiagnosticRule>(defaultRuleDraft());
 
   useEffect(() => {
     window.localStorage.setItem(localConfigurationKey, JSON.stringify({ settings, rules }));
   }, [rules, settings]);
 
-  const evaluations = useMemo(
-    () => analysis ? evaluateRules(rules, analysis.productFamily, analysis.complaintKey, analysis.dlmsFeatures) : [],
-    [analysis, rules],
-  );
-  const matchedRules = evaluations.filter((evaluation) => evaluation.applicable);
-  const activeRules = rules.filter((rule) => rule.status === "active");
+  const selectedRow = useMemo(() => register?.rows.find((row) => row.rowNumber === selectedRowNumber) ?? null, [register, selectedRowNumber]);
+  const selectedRole = meterRoles.find((role) => role.id === meterRole) ?? meterRoles[0];
+  const selectedMeterId = selectedRow ? ffrValue(selectedRow, selectedRole.field) : "";
+  const selectedCase = selectedRow ? classifyFfrCase(selectedRow, settings) : null;
+  const validDlms = dlms?.identityState === "READY_TO_ANALYZE";
 
-  const inspect = async (files: File[]) => {
-    if (!files.length) return;
-    setLoadingFiles(true);
-    setAnalysisStarted(false);
+  const resetEvidence = () => {
+    setDlms(null);
+    setImages(null);
+  };
+
+  const handleFfrUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length !== 1) {
+      setIntakeError(files.length > 1 ? "MULTIPLE_FFR_REGISTERS: upload one FFR register at a time." : "MISSING_REQUIRED_WORKBOOK: choose the FFR register first.");
+      return;
+    }
+    setBusyStage("ffr");
+    setIntakeError("");
     try {
-      const packageResult = await inspectFiles(files, settings);
-      setAnalysis(packageResult);
-      setNotice("Files classified from workbook content. No source file has been changed.");
+      const inspection = await inspectFfrRegister(files[0], settings);
+      setRegister(inspection);
+      setSelectedRowNumber(null);
+      setMeterRole("old");
+      resetEvidence();
+      setNotice("FFR register validated. Choose the case and the meter whose evidence you want to assess.");
+    } catch (error) {
+      setRegister(null);
+      setSelectedRowNumber(null);
+      resetEvidence();
+      setIntakeError(error instanceof Error ? error.message : "UNRECOGNIZED_FILE: the FFR register could not be validated.");
     } finally {
-      setLoadingFiles(false);
+      setBusyStage(null);
     }
   };
 
-  const onInput = (event: ChangeEvent<HTMLInputElement>) => void inspect(Array.from(event.target.files ?? []));
-  const onDrop = (event: DragEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    void inspect(Array.from(event.dataTransfer.files));
+  const chooseCase = (rowNumber: number) => {
+    setSelectedRowNumber(rowNumber);
+    setMeterRole("old");
+    resetEvidence();
+    setIntakeError("");
+    setNotice(`Case on FFR row ${rowNumber} selected. Choose whether evidence belongs to the defective or replacement meter.`);
+  };
+
+  const chooseMeterRole = (role: MeterRole) => {
+    setMeterRole(role);
+    resetEvidence();
+    setIntakeError("");
+  };
+
+  const handleDlmsUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length !== 1) {
+      setIntakeError(files.length > 1 ? "MULTIPLE_DLMS_PACKAGES: upload one DLMS workbook for the selected meter." : "MISSING_REQUIRED_WORKBOOK: choose the matching DLMS workbook.");
+      return;
+    }
+    if (!selectedMeterId) return;
+    setBusyStage("dlms");
+    setIntakeError("");
+    try {
+      const inspection = await inspectDlmsWorkbook(files[0], selectedMeterId, settings);
+      setDlms(inspection);
+      setImages(null);
+      setNotice(inspection.messages[0]);
+    } catch (error) {
+      setDlms(null);
+      setImages(null);
+      setIntakeError(error instanceof Error ? error.message : "UNRECOGNIZED_FILE: the DLMS workbook could not be validated.");
+    } finally {
+      setBusyStage(null);
+    }
+  };
+
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    setBusyStage("images");
+    setIntakeError("");
+    try {
+      const inspection = await inspectImageEvidence(files, settings);
+      setImages(inspection);
+      setNotice(inspection.messages[0] ?? `${inspection.artifacts.filter((artifact) => artifact.kind === "IMAGE").length} image file(s) were bound to the selected meter.`);
+    } finally {
+      setBusyStage(null);
+    }
   };
 
   const addMapping = () => {
-    if (!mappingValue.trim()) return setNotice("Enter the exact value used by the FFR workbook before adding a mapping.");
+    if (!mappingValue.trim()) {
+      setNotice("Enter the exact FFR value before adding a mapping.");
+      return;
+    }
     setSettings((current) => ({
       ...current,
-      productMappings: [
-        ...current.productMappings,
-        {
-          id: `mapping-${Date.now()}`,
-          sourceField: mappingField,
-          sourceValue: mappingValue.trim(),
-          productFamily: mappingFamily,
-          basis: "Added in Settings — pending review",
-        },
-      ],
+      productMappings: [...current.productMappings, { id: `mapping-${Date.now()}`, sourceField: mappingField, sourceValue: mappingValue.trim(), productFamily: mappingFamily, basis: "Local browser draft — not approved" }],
     }));
     setMappingValue("");
-    setNotice("Product-family mapping added to the configuration draft.");
   };
 
-  const addRule = () => {
-    if (!draftRule.id.trim() || !draftRule.title.trim() || !draftRule.purpose.trim()) {
-      setNotice("A rule needs an ID, title, and engineering purpose.");
+  const handleLogoUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/") || !/\.(svg|png|jpe?g|webp)$/i.test(file.name)) {
+      setNotice("Use an SVG, PNG, JPEG, or WebP logo file.");
       return;
     }
-    if (rules.some((rule) => rule.id === draftRule.id)) {
-      setNotice("Rule IDs are stable identifiers. Use a new ID or edit the existing rule through a future repository-backed change.");
+    if (file.size > 2 * 1024 * 1024) {
+      setNotice("Use a logo smaller than 2 MB for this browser-local preview.");
       return;
     }
-    setRules((current) => [...current, { ...draftRule, conditions: draftRule.conditions.map((condition) => ({ ...condition })) }]);
-    setDraftRule(defaultRuleDraft());
-    setNotice("Rule draft added. It remains inactive until it has an owner, reviewer, and a published status.");
-  };
-
-  const activateRule = (id: string) => {
-    const target = rules.find((rule) => rule.id === id);
-    if (!target || !target.owner.trim() || target.owner === "Unassigned" || !target.reviewer.trim() || target.reviewer === "Unassigned") {
-      setNotice("An owner and reviewer must be recorded before a rule can be published as active.");
-      return;
-    }
-    setRules((current) => current.map((rule) => rule.id === id ? { ...rule, status: "active" } : rule));
-    setNotice("Rule published for future analysis runs. Existing runs retain their recorded bundle.");
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSettings((current) => ({ ...current, branding: { logoDataUrl: typeof reader.result === "string" ? reader.result : null, logoFileName: file.name } }));
+      setNotice("Logo applied to this browser session. Server branding storage is not implemented in this build.");
+    };
+    reader.readAsDataURL(file);
   };
 
   const downloadSettings = () => {
@@ -176,182 +273,56 @@ export default function Home() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "kimbal-ffr-pilot-configuration.json";
+    link.download = "kimbal-ffr-local-configuration.json";
     link.click();
     URL.revokeObjectURL(url);
-    setNotice("Configuration draft downloaded. Persisted server-side configuration is the next infrastructure slice.");
+    setNotice("Local configuration draft downloaded.");
   };
 
+  const renderCaseDetails = (row: FfrRow) => <div className="case-context-list">
+    {caseDisplayGroups.map((group) => <details key={group.id} open={group.id === "case_context" || group.id === "asset_context" || group.id === "complaint_context"}>
+      <summary>{group.title}</summary>
+      <dl>{group.fields.map((field) => <div key={field}><dt>{row.labels[canonicalField(field)] ?? field}</dt><dd>{ffrValue(row, field) || "Not supplied"}</dd></div>)}</dl>
+    </details>)}
+  </div>;
+
+  const renderException = () => <div className="page-stack">
+    <header className="page-header"><div className="page-symbol"><AlertTriangle size={22} /></div><div><span className="eyebrow">Identity exception</span><h1>Evidence does not belong to the selected meter</h1><p>Processing stopped before image intake, rules, RCA, CAPA, or workbook output. Product mapping cannot resolve a meter identity mismatch.</p></div><Status tone="danger">IDENTITY_NO_MATCH</Status></header>
+    <Card className="exception-panel"><SectionHead title="Upload the matching DLMS workbook or choose another register meter" /><dl className="data-list"><div><dt>Selected FFR case</dt><dd>Row {selectedRow?.rowNumber} · {ffrValue(selectedRow!, "S.No") || "No case reference"}</dd></div><div><dt>Selected evidence target</dt><dd>{selectedRole.title}: {selectedMeterId}</dd></div><div><dt>DLMS serial detected</dt><dd>{dlms?.meterId ?? "Not extracted"}</dd></div><div><dt>Reason</dt><dd>{dlms?.messages[0]}</dd></div></dl><div className="button-row"><button className="button secondary" onClick={() => { setDlms(null); setImages(null); setIntakeError(""); }}><Upload size={15} /> Upload another DLMS workbook</button><button className="button secondary" onClick={() => { setSelectedRowNumber(null); resetEvidence(); }}><ChevronRight size={15} /> Choose another case</button></div></Card>
+  </div>;
+
   const renderAnalysis = () => {
-    const canRun = analysis?.identityState === "READY_TO_ANALYZE" && Boolean(analysis.productFamily);
-    const evidenceSummary = analysis
-      ? `${analysis.dlmsFeatures.length} deterministic DLMS features were extracted from the preserved workbook; ${analysis.imageCount} image file(s) were supplied.`
-      : "No evidence package is loaded.";
-    const outcome = matchedRules.length ? "Probable — review required" : "Inconclusive — no active deterministic rule matched";
-    const supportedConclusion = matchedRules.length
-      ? matchedRules.map((evaluation) => evaluation.rule.hypothesisLabel).join(", ")
-      : "No causal conclusion is established from the currently configured rules.";
-    const rcaDraft = interpolate(settings.rcaTemplate, {
-      evidence_summary: evidenceSummary,
-      outcome,
-      supported_conclusion: supportedConclusion,
-      evidence_gaps: analysis?.messages.join(" ") || "No material data-quality warning reported by the intake stage.",
-    });
-    const capaDraft = interpolate(settings.capaTemplate, {
-      containment: matchedRules.length ? "Hold potentially related cases for Quality review." : "Investigate the missing or unmatched evidence before assigning containment.",
-      correction: "Preserve the returned meter and source package; do not alter the original files.",
-      corrective_action: matchedRules.length ? "Assign an engineering owner after Quality reviews the supported hypothesis." : "No cause-specific corrective action is proposed.",
-      preventive_action: "Not established from supplied evidence.",
-      effectiveness_metric: "To be configured by the CAPA owner after RCA approval.",
-    });
-
+    if (dlms?.identityState === "IDENTITY_NO_MATCH") return renderException();
     return <div className="page-stack">
-      <header className="page-header">
-        <div className="page-symbol"><Upload size={22} /></div>
-        <div><span className="eyebrow">Phase 1 file-first pilot</span><h1>New FFR analysis</h1><p>Upload the FFR register, matching BCS/DLMS workbook, and available meter images. The app extracts what is already present; it never asks an analyst to retype it.</p></div>
-        <Status tone="warning">Pilot-generated drafts require review</Status>
-      </header>
-
-      <Card className="upload-card">
-        <SectionHead eyebrow="1. Upload package" title="Detect file roles from their contents" description="FFR register and DLMS package signatures are validated from workbook sheets and headers, not file names." />
-        <button className="drop-zone" onClick={() => inputRef.current?.click()} onDrop={onDrop} onDragOver={(event) => event.preventDefault()}>
-          <span className="drop-icon"><Upload size={23} /></span>
-          <strong>Upload FFR IG, BCS/DLMS, and meter images</strong>
-          <span>Excel workbooks, JPEG, PNG, or WebP. Originals remain unchanged.</span>
-          <em>Select files</em>
-        </button>
-        <input ref={inputRef} className="visually-hidden" type="file" multiple accept=".xlsx,.xls,.jpg,.jpeg,.png,.webp" onChange={onInput} />
-        {loadingFiles && <div className="progress-message"><LoaderCircle className="spin" size={17} /> Reading workbook structure and evidence metadata…</div>}
-        {analysis && <div className="artifact-grid">
-          {analysis.artifacts.map((artifact) => <article key={`${artifact.id}-${artifact.kind}`} className="artifact-card">
-            <span className={`artifact-icon artifact-${artifact.kind.toLowerCase()}`}>{artifact.kind === "IMAGE" ? <ImageIcon size={18} /> : <FileSpreadsheet size={18} />}</span>
-            <div><strong>{artifact.name}</strong><small>{artifact.detail}</small></div>
-            <Status tone={artifact.kind === "UNRECOGNIZED" ? "danger" : "good"}>{artifact.kind.replaceAll("_", " ")}</Status>
-            <small>{formatSize(artifact.size)}</small>
-          </article>)}
-        </div>}
-      </Card>
-
-      {analysis && <>
-        <section className="pipeline" aria-label="Analysis pipeline">
-          {[
-            ["Files validated", analysis.artifacts.some((artifact) => artifact.kind === "FFR_REGISTER") && analysis.artifacts.some((artifact) => artifact.kind === "DLMS_PACKAGE")],
-            ["Meter identity matched", analysis.identityState === "READY_TO_ANALYZE"],
-            ["Product family mapped", Boolean(analysis.productFamily)],
-            ["Complaint classified", Boolean(analysis.complaintKey)],
-            ["DLMS features extracted", analysis.dlmsFeatures.length > 0],
-            ["Rules evaluated", analysisStarted],
-          ].map(([label, complete], index) => <div className={complete ? "pipeline-step complete" : "pipeline-step"} key={String(label)}><span>{complete ? <CheckCircle2 size={15} /> : index + 1}</span><strong>{label}</strong></div>)}
-        </section>
-
-        <section className="analysis-grid">
-          <Card>
-            <SectionHead eyebrow="2. Identity gate" title="Exact match required" description="The FFR row is selected only by the configured old/new meter-number policy." action={<Status tone={analysis.identityState === "READY_TO_ANALYZE" ? "good" : "danger"}>{stateLabel(analysis.identityState)}</Status>} />
-            <dl className="data-list">
-              <div><dt>DLMS meter identity</dt><dd>{analysis.dlmsMeterId ?? "Not extracted"}</dd></div>
-              <div><dt>FFR rows detected</dt><dd>{analysis.ffrRows.length || "None"}</dd></div>
-              <div><dt>Matched FFR row</dt><dd>{analysis.matchedRow ? `Row ${analysis.matchedRow.rowNumber}` : "No unique row"}</dd></div>
-              <div><dt>Product family</dt><dd>{analysis.productFamily ?? "Unresolved"}</dd></div>
-              <div><dt>Complaint classification</dt><dd>{analysis.complaintKey ? `${analysis.complaintKey} — ${analysis.complaintLabel}` : "Awaiting a valid match"}</dd></div>
-            </dl>
-            {analysis.matchedRow && <div className="matched-row"><span>Matched complaint evidence</span><strong>{analysis.matchedRow.values["Defect Trigger"] || "—"}</strong><p>{analysis.matchedRow.values["Symptoms of the problem New"] || analysis.matchedRow.values["Field Observation"] || "No descriptive complaint was supplied."}</p></div>}
-          </Card>
-          <Card>
-            <SectionHead eyebrow="Exception handling" title={analysis.identityState === "READY_TO_ANALYZE" ? "Package is ready for deterministic analysis" : "Safe stop protects the case record"} />
-            <div className={analysis.identityState === "READY_TO_ANALYZE" ? "callout good" : "callout danger"}>
-              {analysis.identityState === "READY_TO_ANALYZE" ? <CheckCircle2 size={19} /> : <AlertTriangle size={19} />}
-              <div><strong>{analysis.identityState === "READY_TO_ANALYZE" ? "The workbook pair has one exact meter identity." : "No workbook fields will be written or inferred."}</strong><p>{analysis.messages[0] ?? "The detected evidence is ready for the next configured stage."}</p></div>
-            </div>
-            {analysis.identityState !== "READY_TO_ANALYZE" && analysis.ffrRows.length > 0 && <div className="candidate-list"><span>FFR meter candidates</span>{analysis.ffrRows.map((row) => <div key={row.rowNumber}><strong>Row {row.rowNumber}</strong><span>Old {row.values.Old_Meter_Number || "—"} · New {row.values.New_Meter_Number || "—"}</span></div>)}</div>}
-            <button className="button secondary" onClick={() => setPage("settings")}><SlidersHorizontal size={15} /> Review mappings in Settings</button>
-          </Card>
-        </section>
-
-        <Card>
-          <SectionHead eyebrow="3. Deterministic evidence" title="Extracted DLMS features" description="Every feature remains traceable to its source sheet. Feature calculations are separate from rule definitions." />
-          <div className="feature-table"><div className="feature-head"><span>Feature</span><span>Value</span><span>Source</span></div>{analysis.dlmsFeatures.map((feature) => <div key={feature.code}><span><strong>{feature.label}</strong><small>{feature.code}</small></span><strong>{String(feature.value)}</strong><span>{feature.source}</span></div>)}</div>
-        </Card>
-
-        <Card>
-          <SectionHead eyebrow="4. Rule gate" title="Run only published deterministic rules" description="The app never lets AI choose rules in Phase 1." action={<Status tone={activeRules.length ? "good" : "warning"}>{activeRules.length} active rule{activeRules.length === 1 ? "" : "s"}</Status>} />
-          {!canRun && <div className="callout danger"><CircleAlert size={19} /><div><strong>Analysis cannot start yet.</strong><p>Resolve the identity and product-family gate before evaluating rules. The current evidence remains visible and preserved.</p></div></div>}
-          {canRun && !analysisStarted && <div className="callout neutral"><Info size={19} /><div><strong>Ready to apply the versioned rule bundle.</strong><p>{activeRules.length ? "Only conditions configured in active rules will affect the result." : "No active rule bundle is present. You can add/review rules in the Rule library before running."}</p></div></div>}
-          <div className="button-row"><button className="button primary" disabled={!canRun || loadingFiles} onClick={() => { setAnalysisStarted(true); setNotice(activeRules.length ? "Deterministic rule evaluation completed. Review the explanation and evidence links below." : "No active rules were available; the run remains honestly inconclusive."); }}><FileCheck2 size={16} /> Run analysis</button><button className="button secondary" onClick={() => setPage("rules")}><BookOpenCheck size={16} /> Open rule library</button></div>
-        </Card>
-
-        {analysisStarted && <>
-          <Card>
-            <SectionHead eyebrow="Rule evaluation log" title="What ran, what it checked, and why" description="Rule explanations stay visible to analysts; status alone is never the result." />
-            <div className="evaluation-list">{evaluations.map((evaluation) => <article key={evaluation.rule.id}>
-              <div className="evaluation-title"><div><Status tone={evaluation.applicable ? "good" : evaluation.rule.status === "active" ? "warning" : "neutral"}>{evaluation.applicable ? "Matched" : evaluation.rule.status}</Status><h3>{evaluation.rule.title}</h3><p>{evaluation.rule.purpose}</p></div><span>{evaluation.rule.id} · v{evaluation.rule.version}</span></div>
-              <div className="evaluation-grid"><div><small>Why it ran</small><strong>{evaluation.summary}</strong></div><div><small>Required evidence</small><strong>{evaluation.rule.requiredFeatures.join(", ") || "None"}</strong></div><div><small>What it cannot prove</small><strong>{evaluation.rule.limitation}</strong></div></div>
-              <div className="condition-list">{evaluation.conditionResults.map((condition, index) => <div key={`${condition.feature}-${index}`}><Status tone={condition.passed ? "good" : "warning"}>{condition.passed ? "Matched" : "Not met"}</Status><span>{condition.feature} {condition.operator} {condition.value ?? ""}</span><strong>Actual: {condition.actual}</strong></div>)}</div>
-            </article>)}</div>
-          </Card>
-          <section className="analysis-grid">
-            <Card><SectionHead eyebrow="Draft RCA" title="Evidence-linked, not invented" /><p className="draft-copy">{rcaDraft}</p><div className="draft-meta"><Status tone="warning">{outcome}</Status><span>Template is editable in Settings. This draft is not approved.</span></div></Card>
-            <Card><SectionHead eyebrow="Draft CAPA" title="Action remains provisional" /><p className="draft-copy">{capaDraft}</p><div className="draft-meta"><Status tone="warning">Draft — review required</Status><span>Cause-specific CAPA is withheld when no rule supports a hypothesis.</span></div></Card>
-          </section>
-        </>}
+      <header className="page-header"><div className="page-symbol"><ClipboardList size={22} /></div><div><span className="eyebrow">Development proof of concept</span><h1>Register-first case intake</h1><p>Start with one FFR register, select the case and evidence target, then provide that meter’s DLMS workbook and images in separate stages.</p></div><Status tone="warning">No governed analysis run yet</Status></header>
+      <section className="workflow-overview" aria-label="Case intake stages">{[["1", "FFR register", Boolean(register)], ["2", "Case and meter", Boolean(selectedRow && selectedMeterId)], ["3", "Matching DLMS", Boolean(validDlms)], ["4", "Image evidence", Boolean(images)], ["5", "Analysis readiness", false]].map(([number, label, complete]) => <div className={complete ? "pipeline-step complete" : "pipeline-step"} key={String(number)}><span>{complete ? <CheckCircle2 size={15} /> : number}</span><strong>{label}</strong></div>)}</section>
+      {intakeError && <div className="callout danger" role="alert"><AlertTriangle size={19} /><div><strong>Intake stopped.</strong><p>{intakeError}</p></div></div>}
+      {!register && <UploadStage title="1. Upload the FFR IG register" description="This is the source register of selectable FFR cases. Upload only this workbook first; the app will read its case, meter, complaint, field, logistics, and existing CAPA data." buttonText={busyStage === "ffr" ? "Reading FFR register…" : "Upload one FFR IG workbook"} accept=".xlsx,.xls" onChange={handleFfrUpload} />}
+      {register && !selectedRow && <Card className="stage-card"><SectionHead eyebrow="1. FFR register validated" title="Choose the FFR case before uploading evidence" description="This register contains multiple meters. The next upload belongs to exactly one selected case and meter, not to the register as a whole." action={<Status tone="good">{register.rows.length} cases</Status>} /><div className="artifact-grid"><ArtifactSummary artifact={register.artifact} /></div><div className="case-table-wrap"><table className="case-table"><thead><tr><th>Case</th><th>Sub-division</th><th>Defective meter</th><th>Replacement meter</th><th>Complaint</th><th>Field observation</th><th><span className="visually-hidden">Select</span></th></tr></thead><tbody>{register.rows.map((row) => <tr key={row.rowNumber}><td><strong>{ffrValue(row, "S.No") || `Row ${row.rowNumber}`}</strong><small>Excel row {row.rowNumber}</small></td><td>{ffrValue(row, "Sub-Division") || "Not supplied"}</td><td>{ffrValue(row, "Old_Meter_Number") || "Not supplied"}</td><td>{ffrValue(row, "New_Meter_Number") || "Not supplied"}</td><td><strong>{ffrValue(row, "Defect Trigger") || "Not supplied"}</strong><small>{ffrValue(row, "Symptoms of the problem New")}</small></td><td>{ffrValue(row, "Field Observation") || "Not supplied"}</td><td><button className="button primary" onClick={() => chooseCase(row.rowNumber)}>Choose case</button></td></tr>)}</tbody></table></div></Card>}
+      {selectedRow && <>
+        <Card className="case-card"><SectionHead eyebrow="2. Selected FFR case" title={`Case ${ffrValue(selectedRow, "S.No") || `row ${selectedRow.rowNumber}`}`} description="All values below come from the FFR register. Existing RCA/CAPA cells are source context only and are not treated as approved conclusions." action={<button className="button secondary" onClick={() => { setSelectedRowNumber(null); resetEvidence(); }}>Change case</button>} /><div className="case-summary"><div><span>Defect date</span><strong>{ffrValue(selectedRow, "Date Of Defect") || "Not supplied"}</strong></div><div><span>Sub-division</span><strong>{ffrValue(selectedRow, "Sub-Division") || "Not supplied"}</strong></div><div><span>Product mapping</span><strong>{selectedCase?.productFamily ?? "Unresolved — configure mapping"}</strong></div><div><span>Complaint mapping</span><strong>{selectedCase?.complaintLabel ?? "Unclassified"}</strong></div></div>{renderCaseDetails(selectedRow)}</Card>
+        <Card className="stage-card"><SectionHead eyebrow="2. Evidence target" title="Which meter are you uploading evidence for?" description="This choice controls the exact DLMS identity check. It is deliberately separate from case selection." /><div className="meter-role-grid">{meterRoles.map((role) => { const meterId = ffrValue(selectedRow, role.field); return <button key={role.id} className={meterRole === role.id ? "meter-role selected" : "meter-role"} onClick={() => chooseMeterRole(role.id)} disabled={!meterId}><span><strong>{role.title}</strong><small>{role.description}</small></span><b>{meterId || "No meter number supplied"}</b>{meterRole === role.id && <CheckCircle2 size={18} />}</button>; })}</div>{!selectedMeterId && <div className="callout danger"><AlertTriangle size={19} /><div><strong>This case has no selected meter ID.</strong><p>Select a populated meter identity or correct the source register before uploading DLMS evidence.</p></div></div>}</Card>
+        <UploadStage title="3. Upload the matching BCS/DLMS workbook" description={`Upload the single DLMS workbook for ${selectedRole.title.toLowerCase()} ${selectedMeterId}. Its serial number must exactly match this selected ID.`} buttonText={busyStage === "dlms" ? "Reading DLMS workbook…" : "Upload one matching DLMS workbook"} accept=".xlsx,.xls" disabled={!selectedMeterId} onChange={handleDlmsUpload}>{dlms && <div className="artifact-grid"><ArtifactSummary artifact={dlms.artifact} /></div>}</UploadStage>
+      </>}
+      {validDlms && <>
+        <Card className="callout good"><CheckCircle2 size={19} /><div><strong>Exact identity confirmed for {selectedMeterId}.</strong><p>{dlms?.messages[0]}</p></div></Card>
+        <UploadStage title="4. Upload images for this selected meter" description="Images are attached only to this case and meter. File signatures are validated. Vision/image analysis is not implemented in this build, so no visual finding is inferred." buttonText={busyStage === "images" ? "Validating image files…" : "Add meter images"} accept=".png,.jpg,.jpeg,.webp" multiple onChange={handleImageUpload}>{images && <div className="artifact-grid">{images.artifacts.map((artifact) => <ArtifactSummary key={artifact.id} artifact={artifact} />)}</div>}</UploadStage>
+        <Card><SectionHead eyebrow="5. Analysis readiness" title="Evidence has been staged, not analyzed" description="This build validates and binds evidence to the selected case. It does not have an approved rule bundle, image-analysis adapter, governed run record, workbook write-back, or exports; no RCA/CAPA is generated." action={<Status tone="warning">RULE_BUNDLE_UNAVAILABLE</Status>} /><div className="feature-table"><div className="feature-head"><span>Preliminary deterministic feature</span><span>Value</span><span>Source and locator</span></div>{dlms?.features.map((feature) => <div key={feature.code}><span><strong>{feature.label}</strong><small>{feature.code}</small></span><strong>{String(feature.value)}</strong><span>{feature.provenance ? `${feature.provenance.sheet} · ${feature.provenance.locator}` : feature.source}</span></div>)}</div></Card>
       </>}
     </div>;
   };
 
-  const renderHistory = () => <div className="page-stack">
-    <header className="page-header"><div className="page-symbol"><ClipboardList size={22} /></div><div><span className="eyebrow">Pilot runs</span><h1>Analysis history</h1><p>Completed runs, exceptions, source versions, and future reports will live here. Source evidence is never overwritten.</p></div></header>
-    <Card>{analysis ? <><SectionHead title="Current browser-session run" description="Server-side PilotRun persistence and immutable object storage are the next infrastructure slice." action={<Status tone={analysis.identityState === "READY_TO_ANALYZE" ? "good" : "danger"}>{stateLabel(analysis.identityState)}</Status>} /><div className="history-row"><div><FileSpreadsheet size={20} /><span><strong>{analysis.dlmsMeterId ?? "No DLMS identity"}</strong><small>{analysis.artifacts.length} artifact(s) · {analysis.dlmsFeatures.length} feature(s)</small></span></div><span>{analysisStarted ? "Rule evaluation recorded in this session" : "Awaiting analysis"}</span><button className="button secondary" onClick={() => setPage("analysis")}>Open run <ChevronRight size={15} /></button></div></> : <div className="empty-state"><ClipboardList size={28} /><strong>No analysis runs yet</strong><span>Upload a file package to create the first pilot run.</span><button className="button primary" onClick={() => setPage("analysis")}>Start analysis</button></div>}</Card>
+  const renderSession = () => <div className="page-stack"><header className="page-header"><div className="page-symbol"><ClipboardList size={22} /></div><div><span className="eyebrow">Browser-only state</span><h1>Current session</h1><p>This page is not persistent run history. Refreshing or clearing browser data may remove the current evidence selection.</p></div></header><Card>{selectedRow ? <><SectionHead title={`Selected case ${ffrValue(selectedRow, "S.No") || selectedRow.rowNumber}`} description="Current session state only." action={<Status tone={validDlms ? "good" : "warning"}>{validDlms ? "DLMS matched" : "Evidence incomplete"}</Status>} /><div className="history-row"><div><FileSpreadsheet size={20} /><span><strong>{selectedMeterId || "No selected meter"}</strong><small>{register?.artifact.name ?? "No FFR register"} · {dlms?.artifact.name ?? "No DLMS workbook"}</small></span></div><button className="button secondary" onClick={() => setPage("analysis")}>Return to intake <ChevronRight size={15} /></button></div></> : <div className="empty-state"><ClipboardList size={28} /><strong>No case selected in this session</strong><span>Start by uploading the FFR register and selecting a case.</span><button className="button primary" onClick={() => setPage("analysis")}>Start case intake</button></div>}</Card></div>;
+
+  const renderRules = () => <div className="page-stack"><header className="page-header"><div className="page-symbol"><BookOpenCheck size={22} /></div><div><span className="eyebrow">Governed deterministic rules</span><h1>Rule bundle</h1><p>The repository contains one unapproved rule template, not an operational rule bundle. Browser edits and browser publication are intentionally unavailable.</p></div><Status tone="danger">RULE_BUNDLE_UNAVAILABLE</Status></header><Card><SectionHead title="What a rule must declare" description="The template is visible so engineering teams can review the decision boundary, but it cannot influence a case." /><div className="rule-detail-grid"><div><small>Question it helps answer</small><strong>{ruleTemplate.purpose}</strong></div><div><small>Applies to</small><strong>{ruleTemplate.productFamilies.join(", ")} · {ruleTemplate.complaintKeys.join(", ")}</strong></div><div><small>Evidence condition</small><strong>{ruleTemplate.conditions.map((condition) => `${condition.feature} ${condition.operator} ${condition.value ?? ""}`).join(" and ")}</strong></div><div><small>Possible effect</small><strong>{ruleTemplate.hypothesisLabel} +{ruleTemplate.weight}</strong></div><div><small>Required follow-up</small><strong>{ruleTemplate.requiredFollowUp}</strong></div><div><small>Stop policy</small><strong>{ruleTemplate.limitation}</strong></div></div><div className="callout warning"><Info size={19} /><div><strong>Why the case cannot run yet.</strong><p>There are no reviewed active rules, fixtures, or coverage matrix. A deterministic analysis run must remain blocked rather than return a misleading inconclusive RCA.</p></div></div></Card></div>;
+
+  const renderSettings = () => <div className="page-stack"><header className="page-header"><div className="page-symbol"><Settings size={22} /></div><div><span className="eyebrow">Browser-local preferences</span><h1>Settings</h1><p>These values are stored in this browser and can be downloaded. They are not server-persisted, audited, access-controlled, or applied to historic runs.</p></div><button className="button secondary" onClick={downloadSettings}><Download size={15} /> Download local draft</button></header>
+    <section className="settings-grid"><Card><SectionHead eyebrow="Branding" title="Upload the Kimbal logo" description="Use the approved logo asset. It is used as a browser-local preview only until branding storage is implemented." /><div className="logo-setting"><div className="logo-preview">{settings.branding.logoDataUrl ? <img src={settings.branding.logoDataUrl} alt="Uploaded organisation logo" /> : <span>No logo uploaded</span>}</div><div><label className="button secondary"> <Upload size={15} /> Upload logo<input className="visually-hidden" type="file" accept=".svg,.png,.jpg,.jpeg,.webp" onChange={handleLogoUpload} /></label>{settings.branding.logoFileName && <small>{settings.branding.logoFileName}</small>}{settings.branding.logoDataUrl && <button className="text-button" onClick={() => setSettings((current) => ({ ...current, branding: { logoDataUrl: null, logoFileName: null } }))}>Remove local logo</button>}</div></div></Card><Card><SectionHead eyebrow="Pilot settings" title="Upload and retention preference" /><div className="form-grid"><label>Maximum upload size (MB)<input type="number" min="1" value={settings.uploadMaxMb} onChange={(event) => setSettings({ ...settings, uploadMaxMb: Number(event.target.value) })} /></label><label>Retention preference (days)<input type="number" min="1" value={settings.retentionDays} onChange={(event) => setSettings({ ...settings, retentionDays: Number(event.target.value) })} /></label><label>Pilot access mode<input value={settings.pilotAccess.mode} onChange={(event) => setSettings({ ...settings, pilotAccess: { ...settings.pilotAccess, mode: event.target.value } })} /></label><label className="wide">Approved pilot roles (local reference)<input value={settings.pilotAccess.approvedRoles.join(", ")} onChange={(event) => setSettings({ ...settings, pilotAccess: { ...settings.pilotAccess, approvedRoles: event.target.value.split(",").map((role) => role.trim()).filter(Boolean) } })} /></label></div><p className="helper-text">Upload size is applied by this browser build. Retention and access are not enforced until server storage and RBAC exist.</p></Card></section>
+    <Card><SectionHead eyebrow="Product-family mapping" title="Map actual FFR values to Meter, NIC, or Gateway" description="Catalogue presence is not diagnostic coverage. Only exact mappings configured here can classify a selected FFR case." /><div className="mapping-list">{settings.productMappings.map((mapping) => <div key={mapping.id}><span><strong>{mapping.sourceField}</strong><small>{mapping.basis}</small></span><strong>{mapping.sourceValue}</strong><Status tone="good">{mapping.productFamily}</Status><button aria-label={`Remove ${mapping.sourceValue} mapping`} onClick={() => setSettings((current) => ({ ...current, productMappings: current.productMappings.filter((item) => item.id !== mapping.id) }))}><X size={15} /></button></div>)}</div><div className="inline-form"><select value={mappingField} onChange={(event) => setMappingField(event.target.value as "Meter type" | "Old_Meter_Type")}><option>Old_Meter_Type</option><option>Meter type</option></select><input value={mappingValue} onChange={(event) => setMappingValue(event.target.value)} placeholder="Exact FFR value" /><select value={mappingFamily} onChange={(event) => setMappingFamily(event.target.value as ProductFamily)}>{productFamilyOptions().map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><button className="button secondary" onClick={addMapping}><SlidersHorizontal size={15} /> Add local mapping</button></div></Card>
+    <section className="settings-grid"><Card><SectionHead eyebrow="AI reference only" title="No AI provider is connected" description="Do not enter credentials here. These are local reference fields only; no model call, image analysis, or structured reasoning service is implemented." /><div className="form-grid"><label>Provider reference<input value={settings.ai.provider} onChange={(event) => setSettings({ ...settings, ai: { ...settings.ai, provider: event.target.value } })} /></label><label>Vision-model reference<input value={settings.ai.visionModel} onChange={(event) => setSettings({ ...settings, ai: { ...settings.ai, visionModel: event.target.value } })} /></label><label>Reasoning-model reference<input value={settings.ai.reasoningModel} onChange={(event) => setSettings({ ...settings, ai: { ...settings.ai, reasoningModel: event.target.value } })} /></label><label className="wide">Future server secret reference<input value={settings.ai.credentialReference} onChange={(event) => setSettings({ ...settings, ai: { ...settings.ai, credentialReference: event.target.value } })} /></label></div></Card><Card><SectionHead eyebrow="Draft wording" title="RCA and CAPA templates" description="No approved RCA/CAPA wording is supplied. These local templates cannot create a report in this build." /><div className="template-grid"><label>RCA template<textarea value={settings.rcaTemplate} onChange={(event) => setSettings({ ...settings, rcaTemplate: event.target.value })} /></label><label>CAPA template<textarea value={settings.capaTemplate} onChange={(event) => setSettings({ ...settings, capaTemplate: event.target.value })} /></label></div></Card></section>
   </div>;
 
-  const renderRules = () => <div className="page-stack">
-    <header className="page-header"><div className="page-symbol"><BookOpenCheck size={22} /></div><div><span className="eyebrow">Engineering-managed knowledge</span><h1>Rule library</h1><p>Rules are explainable, versioned engineering assets. A draft is visible for review but can never affect a result.</p></div><Status tone="ai">AI does not select rules in Phase 1</Status></header>
-    <Card><SectionHead title="Rule coverage" description="The first bundle starts intentionally empty. Add and review rules with engineering before publishing them." /><div className="rule-summary"><div><strong>{rules.length}</strong><span>Total rule records</span></div><div><strong>{activeRules.length}</strong><span>Published active rules</span></div><div><strong>{rules.filter((rule) => rule.status === "draft").length}</strong><span>Drafts requiring review</span></div><div><strong>{productFamilyOptions().length}</strong><span>Supported product families</span></div></div></Card>
-    <div className="rule-library">{rules.map((rule) => <Card key={rule.id} className="rule-card"><div className="rule-card-head"><div><Status tone={rule.status === "active" ? "good" : rule.status === "draft" ? "warning" : "neutral"}>{rule.status}</Status><h2>{rule.title}</h2><p>{rule.purpose}</p></div><span>{rule.id} · v{rule.version}</span></div><div className="rule-detail-grid"><div><small>Applies to</small><strong>{rule.productFamilies.join(", ")}</strong></div><div><small>Complaint scope</small><strong>{rule.complaintKeys.join(", ")}</strong></div><div><small>Hypothesis effect</small><strong>{rule.hypothesisLabel} +{rule.weight}</strong></div><div><small>Allowed outcome</small><strong>{rule.allowedOutcome}</strong></div><div><small>Next evidence</small><strong>{rule.requiredFollowUp}</strong></div><div><small>Governance</small><strong>{rule.owner} · reviewer: {rule.reviewer}</strong></div></div><div className="rule-explanation"><div><span>What it checks</span><p>{rule.conditions.map((condition) => `${condition.feature} ${condition.operator} ${condition.value ?? ""}`).join(" and ") || "No conditions configured"}</p></div><div><span>Why it matters</span><p>{rule.analystExplanation}</p></div><div><span>What it cannot prove</span><p>{rule.limitation}</p></div></div>{rule.status !== "active" && <button className="button secondary" onClick={() => activateRule(rule.id)}><ShieldCheck size={15} /> Publish after review</button>}</Card>)}</div>
-    <Card><SectionHead eyebrow="Add rule draft" title="Create a reviewable diagnostic rule" description="This form produces configuration data. Production authoring will persist the same schema with validation, fixtures, review, and audit history." />
-      <div className="form-grid rule-form">
-        <label>Rule ID<input value={draftRule.id} onChange={(event) => setDraftRule({ ...draftRule, id: event.target.value })} /></label>
-        <label>Version<input value={draftRule.version} onChange={(event) => setDraftRule({ ...draftRule, version: event.target.value })} /></label>
-        <label className="wide">Rule title<input value={draftRule.title} onChange={(event) => setDraftRule({ ...draftRule, title: event.target.value })} /></label>
-        <label className="wide">Engineering purpose<textarea value={draftRule.purpose} onChange={(event) => setDraftRule({ ...draftRule, purpose: event.target.value })} /></label>
-        <label>Product family<select value={draftRule.productFamilies[0]} onChange={(event) => setDraftRule({ ...draftRule, productFamilies: [event.target.value as ProductFamily] })}>{productFamilyOptions().map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-        <label>Complaint scope<select value={draftRule.complaintKeys[0]} onChange={(event) => setDraftRule({ ...draftRule, complaintKeys: [event.target.value] })}>{complaintOptions(draftRule.productFamilies[0]).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-        <label>Required feature<input value={draftRule.requiredFeatures[0] ?? ""} onChange={(event) => setDraftRule({ ...draftRule, requiredFeatures: [event.target.value], conditions: [{ ...draftRule.conditions[0], feature: event.target.value }] })} /></label>
-        <label>Operator<select value={draftRule.conditions[0]?.operator} onChange={(event) => setDraftRule({ ...draftRule, conditions: [{ ...draftRule.conditions[0], operator: event.target.value as RuleOperator }] })}>{(["exists", "equals", "gte", "lte"] as RuleOperator[]).map((operator) => <option key={operator}>{operator}</option>)}</select></label>
-        <label>Expected value<input value={draftRule.conditions[0]?.value ?? ""} onChange={(event) => setDraftRule({ ...draftRule, conditions: [{ ...draftRule.conditions[0], value: event.target.value }] })} /></label>
-        <label>Hypothesis code<input value={draftRule.hypothesisCode} onChange={(event) => setDraftRule({ ...draftRule, hypothesisCode: event.target.value })} /></label>
-        <label>Hypothesis label<input value={draftRule.hypothesisLabel} onChange={(event) => setDraftRule({ ...draftRule, hypothesisLabel: event.target.value })} /></label>
-        <label>Weight<input type="number" value={draftRule.weight} onChange={(event) => setDraftRule({ ...draftRule, weight: Number(event.target.value) })} /></label>
-        <label>Owner<input value={draftRule.owner} onChange={(event) => setDraftRule({ ...draftRule, owner: event.target.value })} /></label>
-        <label>Reviewer<input value={draftRule.reviewer} onChange={(event) => setDraftRule({ ...draftRule, reviewer: event.target.value })} /></label>
-        <label>Required next evidence<input value={draftRule.requiredFollowUp} onChange={(event) => setDraftRule({ ...draftRule, requiredFollowUp: event.target.value })} /></label>
-        <label>Allowed outcome<input value={draftRule.allowedOutcome} onChange={(event) => setDraftRule({ ...draftRule, allowedOutcome: event.target.value })} /></label>
-        <label className="wide">Analyst explanation<textarea value={draftRule.analystExplanation} onChange={(event) => setDraftRule({ ...draftRule, analystExplanation: event.target.value })} /></label>
-        <label className="wide">Report-safe explanation<textarea value={draftRule.reportSafeExplanation} onChange={(event) => setDraftRule({ ...draftRule, reportSafeExplanation: event.target.value })} /></label>
-        <label className="wide">Limitation / stop policy<textarea value={draftRule.limitation} onChange={(event) => setDraftRule({ ...draftRule, limitation: event.target.value })} /></label>
-      </div>
-      <button className="button primary" onClick={addRule}><Plus size={16} /> Add draft rule</button>
-    </Card>
-  </div>;
+  const content: Record<Page, ReactNode> = { analysis: renderAnalysis(), session: renderSession(), rules: renderRules(), settings: renderSettings() };
 
-  const renderSettings = () => <div className="page-stack">
-    <header className="page-header"><div className="page-symbol"><Settings size={22} /></div><div><span className="eyebrow">Administrator configuration</span><h1>Settings</h1><p>Configuration is data, not UI code. Publishable configuration will be stored and audited server-side in the persistence slice.</p></div><button className="button secondary" onClick={downloadSettings}><Download size={15} /> Download draft</button></header>
-    <Card><SectionHead eyebrow="Product-family mapping" title="Map incoming FFR values to Meter, NIC, or Gateway" description="Mappings are exact and deterministic. The app will stop safely when no unique mapping applies." />
-      <div className="mapping-list">{settings.productMappings.map((mapping) => <div key={mapping.id}><span><strong>{mapping.sourceField}</strong><small>{mapping.basis}</small></span><strong>{mapping.sourceValue}</strong><Status tone="good">{mapping.productFamily}</Status><button aria-label={`Remove ${mapping.sourceValue} mapping`} onClick={() => setSettings((current) => ({ ...current, productMappings: current.productMappings.filter((item) => item.id !== mapping.id) }))}><X size={15} /></button></div>)}</div>
-      <div className="inline-form"><select value={mappingField} onChange={(event) => setMappingField(event.target.value as "Meter type" | "Old_Meter_Type")}><option>Old_Meter_Type</option><option>Meter type</option></select><input value={mappingValue} onChange={(event) => setMappingValue(event.target.value)} placeholder="Exact FFR value, e.g. NIC type" /><select value={mappingFamily} onChange={(event) => setMappingFamily(event.target.value as ProductFamily)}>{productFamilyOptions().map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><button className="button secondary" onClick={addMapping}><Plus size={15} /> Add mapping</button></div>
-    </Card>
-    <section className="settings-grid">
-      <Card><SectionHead eyebrow="AI configuration" title="Provider-ready settings" description="Credentials remain server-side; the browser receives no secret." />
-        <div className="form-grid"><label>AI provider<input value={settings.ai.provider} onChange={(event) => setSettings({ ...settings, ai: { ...settings.ai, provider: event.target.value } })} /></label><label>Vision model<input value={settings.ai.visionModel} onChange={(event) => setSettings({ ...settings, ai: { ...settings.ai, visionModel: event.target.value } })} /></label><label>Reasoning model<input value={settings.ai.reasoningModel} onChange={(event) => setSettings({ ...settings, ai: { ...settings.ai, reasoningModel: event.target.value } })} /></label><label className="wide">Server credential reference<input value={settings.ai.credentialReference} onChange={(event) => setSettings({ ...settings, ai: { ...settings.ai, credentialReference: event.target.value } })} /><small>Use a vault secret name or connection ID; never enter the secret in the browser.</small></label><label className="toggle"><input type="checkbox" checked={settings.ai.visionEnabled} onChange={(event) => setSettings({ ...settings, ai: { ...settings.ai, visionEnabled: event.target.checked } })} /><span>Enable vision analysis when a configured provider is available</span></label></div>
-      </Card>
-      <Card><SectionHead eyebrow="Pilot operations" title="Retention, upload, and access policy" /><div className="form-grid"><label>Evidence retention (days)<input type="number" min="1" value={settings.retentionDays} onChange={(event) => setSettings({ ...settings, retentionDays: Number(event.target.value) })} /></label><label>Maximum upload size (MB)<input type="number" min="1" value={settings.uploadMaxMb} onChange={(event) => setSettings({ ...settings, uploadMaxMb: Number(event.target.value) })} /></label><label>Pilot access mode<input value={settings.pilotAccess.mode} onChange={(event) => setSettings({ ...settings, pilotAccess: { ...settings.pilotAccess, mode: event.target.value } })} /></label><label className="wide">Approved pilot roles (comma separated)<input value={settings.pilotAccess.approvedRoles.join(", ")} onChange={(event) => setSettings({ ...settings, pilotAccess: { ...settings.pilotAccess, approvedRoles: event.target.value.split(",").map((role) => role.trim()).filter(Boolean) } })} /></label></div><p className="helper-text">There is no file-cost setting. The configured upload limit is applied before reading a file; retention and access rules are enforced by the hosted persistence layer.</p></Card>
-    </section>
-    <Card><SectionHead eyebrow="Draft wording" title="Editable RCA and CAPA templates" description="No approved wording is currently provided. These neutral templates are clearly labelled as pilot drafts and are versioned with the run when publishing is added." /><div className="template-grid"><label>RCA template<textarea value={settings.rcaTemplate} onChange={(event) => setSettings({ ...settings, rcaTemplate: event.target.value })} /><small>{"Tokens: {{evidence_summary}}, {{outcome}}, {{supported_conclusion}}, {{evidence_gaps}}"}</small></label><label>CAPA template<textarea value={settings.capaTemplate} onChange={(event) => setSettings({ ...settings, capaTemplate: event.target.value })} /><small>{"Tokens: {{containment}}, {{correction}}, {{corrective_action}}, {{preventive_action}}, {{effectiveness_metric}}"}</small></label></div></Card>
-    <Card><SectionHead eyebrow="Configuration governance" title="What remains guarded" /><div className="guard-grid"><div><ShieldCheck size={19} /><strong>Evidence is immutable</strong><span>Settings never rewrite uploaded source files or historic results.</span></div><div><Layers3 size={19} /><strong>Published versions are pinned</strong><span>Rule, mapping, and template versions are recorded on each future run.</span></div><div><Bot size={19} /><strong>AI is constrained</strong><span>Models can summarize and rank; they cannot select rules or approve conclusions.</span></div></div></Card>
-  </div>;
-
-  const content: Record<Page, ReactNode> = { analysis: renderAnalysis(), history: renderHistory(), rules: renderRules(), settings: renderSettings() };
-
-  return <div className="app-shell">
-    <aside className="sidebar"><div className="brand"><div className="brand-mark">K</div><div><strong>Kimbal</strong><span>FFR Intelligence</span></div></div><div className="pilot-chip"><Layers3 size={14} /> File-first pilot</div><nav aria-label="Primary navigation">{navigation.map((item) => { const Icon = item.icon; return <button className={page === item.id ? "active" : ""} key={item.id} onClick={() => setPage(item.id)}><Icon size={18} /><span><strong>{item.label}</strong><small>{item.description}</small></span></button>; })}</nav><div className="sidebar-note"><ShieldCheck size={16} /><span><strong>Evidence before inference</strong><small>Exact identity matching and configuration gates protect every case.</small></span></div></aside>
-    <main className="main"><header className="topbar"><div><span>Private pilot workspace</span><strong>Configurable, evidence-linked diagnosis</strong></div><div className="topbar-status"><Status tone="good">Local prototype</Status><span>v1.0</span></div></header><div className="content">{notice && <div className="notice"><Info size={16} /><span>{notice}</span><button aria-label="Dismiss notification" onClick={() => setNotice("")}><X size={15} /></button></div>}{content[page]}</div></main>
-  </div>;
+  return <div className="app-shell"><a className="skip-link" href="#main-content">Skip to case intake</a><aside className="sidebar"><div className="brand">{settings.branding.logoDataUrl ? <img className="brand-logo-image" src={settings.branding.logoDataUrl} alt="Organisation logo" /> : <div className="brand-wordmark">Kimbal</div>}<div><strong>Kimbal</strong><span>FFR Intelligence</span></div></div><div className="pilot-chip"><Layers3 size={14} /> Development proof of concept</div><nav aria-label="Primary navigation">{navigation.map((item) => { const Icon = item.icon; return <button aria-current={page === item.id ? "page" : undefined} className={page === item.id ? "active" : ""} key={item.id} onClick={() => setPage(item.id)}><Icon size={18} /><span><strong>{item.label}</strong><small>{item.description}</small></span></button>; })}</nav><div className="sidebar-note"><ShieldCheck size={16} /><span><strong>Exact identity before inference</strong><small>FFR case selection and meter identity are separate, required stages.</small></span></div></aside><main className="main" id="main-content"><header className="topbar"><div><span>Private pilot workspace</span><strong>Case-first evidence staging</strong></div><div className="topbar-status"><Status tone="warning">Local browser state</Status><span>v1.1</span></div></header><div className="content">{notice && <div className="notice" aria-live="polite"><Info size={16} /><span>{notice}</span><button aria-label="Dismiss notification" onClick={() => setNotice("")}><X size={15} /></button></div>}{content[page]}</div></main></div>;
 }

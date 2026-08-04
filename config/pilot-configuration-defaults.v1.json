@@ -19,6 +19,10 @@
       "System administrator"
     ]
   },
+  "branding": {
+    "logoDataUrl": null,
+    "logoFileName": null
+  },
   "rcaTemplate": "Pilot-generated draft — review required. Available evidence {{evidence_summary}}. Outcome: {{outcome}}. Supported conclusion: {{supported_conclusion}}. Missing or contradictory evidence: {{evidence_gaps}}.",
   "capaTemplate": "Pilot-generated draft — review required. Containment: {{containment}}. Case correction: {{correction}}. Corrective action: {{corrective_action}}. Preventive action: {{preventive_action}}. Effectiveness: {{effectiveness_metric}}."
 }

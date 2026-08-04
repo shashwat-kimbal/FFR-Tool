@@ -8,6 +8,13 @@ export type IdentityState =
   | "IDENTITY_AMBIGUOUS"
   | "READY_TO_ANALYZE";
 
+export type IntakeException =
+  | "MULTIPLE_FFR_REGISTERS"
+  | "MULTIPLE_DLMS_PACKAGES"
+  | "MISSING_REQUIRED_WORKBOOK"
+  | "UNRECOGNIZED_FILE"
+  | "IDENTITY_NO_MATCH";
+
 export type RuleStatus = "draft" | "active" | "retired";
 
 export type RuleOperator = "exists" | "equals" | "gte" | "lte";
@@ -34,6 +41,10 @@ export interface AppSettings {
   pilotAccess: {
     mode: string;
     approvedRoles: string[];
+  };
+  branding: {
+    logoDataUrl: string | null;
+    logoFileName: string | null;
   };
   rcaTemplate: string;
   capaTemplate: string;
@@ -72,6 +83,11 @@ export interface DerivedFeature {
   label: string;
   value: string | number | boolean;
   source: string;
+  provenance?: {
+    sheet: string;
+    locator: string;
+    artifactName: string;
+  };
   dataQuality?: "normal" | "warning";
 }
 
@@ -81,11 +97,35 @@ export interface UploadedArtifact {
   size: number;
   kind: ArtifactKind;
   detail: string;
+  sha256: string | null;
 }
 
 export interface FfrRow {
   rowNumber: number;
   values: Record<string, string>;
+  labels: Record<string, string>;
+}
+
+export interface FfrRegisterInspection {
+  artifact: UploadedArtifact;
+  sheetName: string;
+  rows: FfrRow[];
+  fields: Array<{ key: string; label: string }>;
+  messages: string[];
+}
+
+export interface DlmsInspection {
+  artifact: UploadedArtifact;
+  meterId: string | null;
+  expectedMeterId: string;
+  identityState: "READY_TO_ANALYZE" | "IDENTITY_NO_MATCH" | "AWAITING_FILES";
+  features: DerivedFeature[];
+  messages: string[];
+}
+
+export interface ImageInspection {
+  artifacts: UploadedArtifact[];
+  messages: string[];
 }
 
 export interface AnalysisPackage {

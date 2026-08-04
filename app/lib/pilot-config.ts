@@ -4,6 +4,7 @@ import complaintSynonyms from "../../rules/catalogues/complaint-synonyms.v1.json
 import workbookContract from "../../config/pilot-workbook-contract.v1.json";
 import configurationDefaults from "../../config/pilot-configuration-defaults.v1.json";
 import diagnosticRuleTemplate from "../../config/diagnostic-rule-template.v1.json";
+import caseDisplay from "../../config/ffr-case-display.v1.json";
 import type { AppSettings, DiagnosticRule, ProductFamily } from "./pilot-types";
 
 export const pilotContract = workbookContract;
@@ -20,11 +21,13 @@ export const defaultSettings: AppSettings = {
   uploadMaxMb: configurationDefaults.uploadMaxMb,
   ai: { ...configurationDefaults.ai },
   pilotAccess: { ...configurationDefaults.pilotAccess, approvedRoles: [...configurationDefaults.pilotAccess.approvedRoles] },
+  branding: { ...configurationDefaults.branding },
   rcaTemplate: configurationDefaults.rcaTemplate,
   capaTemplate: configurationDefaults.capaTemplate,
 };
 
 export const ruleTemplate = diagnosticRuleTemplate as DiagnosticRule;
+export const caseDisplayGroups = caseDisplay.groups;
 
 type CatalogueFamily = {
   code: string;
