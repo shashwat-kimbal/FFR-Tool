@@ -1,0 +1,223 @@
+{
+  "catalogueId": "kimbal-customer-issue-catalogue",
+  "version": "1.0.0",
+  "status": "draft_for_domain_review",
+  "description": "Customer-reported issue catalogue used before RCA. Codes are scoped by product family because the same short code can mean different things in different families.",
+  "classificationPolicy": {
+    "allowCategoryOnlyWhenSubcategoryIsAmbiguous": true,
+    "allowOtherWithOriginalText": true,
+    "requireOriginalComplaintText": true,
+    "doNotTreatComplaintAsRootCause": true,
+    "compositeKeyFormat": "{productFamily}:{categoryCode}:{subcategoryCode}"
+  },
+  "productFamilies": [
+    {
+      "code": "METER",
+      "name": "Meter",
+      "categories": [
+        {
+          "code": "D",
+          "name": "Display Defective",
+          "subcategories": [
+            { "code": "D1", "name": "Display digit cut" },
+            { "code": "D2", "name": "Only backlight glowing / Display wash" },
+            { "code": "D3", "name": "Backlight off" },
+            { "code": "D4", "name": "Backlight flicker" },
+            { "code": "D5", "name": "Spot on display" },
+            { "code": "D6", "name": "Display scroll defective" }
+          ]
+        },
+        {
+          "code": "F",
+          "name": "No Display",
+          "subcategories": [
+            { "code": "F1", "name": "Battery mode off (Meter On in Supply Mode)" },
+            { "code": "F2", "name": "Supply mode off (Meter On in Battery Mode)" },
+            { "code": "F3", "name": "Memory fail" }
+          ]
+        },
+        {
+          "code": "S",
+          "name": "Meter Dead",
+          "subcategories": [
+            { "code": "S1", "name": "Supply mode & Battery mode off, No CAL, No communication" }
+          ]
+        },
+        {
+          "code": "C",
+          "name": "Communication Issue",
+          "subcategories": [
+            { "code": "C1", "name": "No communication" },
+            { "code": "C2", "name": "Never communication" }
+          ]
+        },
+        {
+          "code": "E",
+          "name": "Abnormal Reading",
+          "subcategories": [
+            { "code": "E1", "name": "Energy jump" },
+            { "code": "E2", "name": "High consumption" },
+            { "code": "E3", "name": "High MD" },
+            { "code": "E4", "name": "LS push data issue" }
+          ]
+        },
+        {
+          "code": "A",
+          "name": "Accuracy Failure",
+          "subcategories": [
+            { "code": "A1", "name": "Voltage read zero/Low/High" },
+            { "code": "A2", "name": "Current read zero/Low/High" },
+            { "code": "A3", "name": "Power factor low (Power > 200W)" },
+            { "code": "A4", "name": "Error fail" },
+            { "code": "A5", "name": "Frequency read Low/High" }
+          ]
+        },
+        {
+          "code": "R",
+          "name": "RTC Failure",
+          "subcategories": [
+            { "code": "R1", "name": "RTC drifted (> 7 min/year)" },
+            { "code": "R2", "name": "RTC default (01-01-2000)" }
+          ]
+        },
+        {
+          "code": "T",
+          "name": "Tampered Event",
+          "subcategories": [
+            { "code": "T1", "name": "Magnet Tamper" },
+            { "code": "T2", "name": "ND Tamper" },
+            { "code": "T3", "name": "NM Tamper" },
+            { "code": "T4", "name": "Earth Load Tamper" },
+            { "code": "T5", "name": "Cover Open Tamper" },
+            { "code": "T6", "name": "Bypass Tamper" },
+            { "code": "T7", "name": "CT Miss" },
+            { "code": "T8", "name": "Potential Miss" },
+            { "code": "T9", "name": "Current Reverse Tamper" }
+          ]
+        },
+        {
+          "code": "O",
+          "name": "Output Issue",
+          "subcategories": [
+            { "code": "O1", "name": "Neutral relay off" },
+            { "code": "O2", "name": "Phase relay off" },
+            { "code": "O3", "name": "Both relay off" }
+          ]
+        },
+        {
+          "code": "M",
+          "name": "Physically Damaged",
+          "subcategories": [
+            { "code": "M1", "name": "Noise issue" },
+            { "code": "M2", "name": "Push button not working" },
+            { "code": "M3", "name": "Base damaged" },
+            { "code": "M4", "name": "Top cover damaged" },
+            { "code": "M5", "name": "Terminal block damaged" },
+            { "code": "M6", "name": "Terminal screw damaged" },
+            { "code": "M7", "name": "Terminal cover screw damaged" },
+            { "code": "M8", "name": "Antenna damaged" },
+            { "code": "M9", "name": "Hologram seal damaged" },
+            { "code": "M10", "name": "Body seal damaged" },
+            { "code": "M11", "name": "Meter enclosure seal damaged" }
+          ]
+        },
+        {
+          "code": "B",
+          "name": "Burnt",
+          "subcategories": [
+            { "code": "B1", "name": "Terminal burnt" },
+            { "code": "B2", "name": "External meter body burnt" }
+          ]
+        },
+        {
+          "code": "OTHER",
+          "name": "Others",
+          "requiresOriginalText": true,
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "code": "NIC",
+      "name": "NIC",
+      "categories": [
+        {
+          "code": "C",
+          "name": "Communication Issue",
+          "subcategories": [
+            { "code": "C1", "name": "No communication" },
+            { "code": "C2", "name": "Never communication" }
+          ]
+        },
+        {
+          "code": "M",
+          "name": "Physically Damaged",
+          "subcategories": [
+            { "code": "M8", "name": "Antenna damaged" },
+            { "code": "M10", "name": "Body seal damaged" }
+          ]
+        },
+        {
+          "code": "OTHER",
+          "name": "Others",
+          "requiresOriginalText": true,
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "code": "GATEWAY",
+      "name": "Gateway",
+      "categories": [
+        {
+          "code": "F",
+          "name": "No Display",
+          "subcategories": [
+            { "code": "F1", "name": "Battery mode off (Meter On in Supply Mode)" },
+            { "code": "F2", "name": "Supply mode off (Meter On in Battery Mode)" }
+          ]
+        },
+        {
+          "code": "S",
+          "name": "Meter Dead",
+          "subcategories": [
+            { "code": "S1", "name": "Supply mode & Battery mode off, No CAL, No communication" }
+          ]
+        },
+        {
+          "code": "C",
+          "name": "Communication Issue",
+          "subcategories": [
+            { "code": "C1", "name": "No communication" },
+            { "code": "C2", "name": "Never communication" }
+          ]
+        },
+        {
+          "code": "M",
+          "name": "Physically Damaged",
+          "subcategories": [
+            { "code": "M2", "name": "Push button not working" },
+            { "code": "M3", "name": "Base damaged" },
+            { "code": "M4", "name": "Top cover damaged" },
+            { "code": "M8", "name": "Antenna damaged" },
+            { "code": "M10", "name": "Body seal damaged" }
+          ]
+        },
+        {
+          "code": "B",
+          "name": "Burnt",
+          "subcategories": [
+            { "code": "B2", "name": "External meter body burnt" },
+            { "code": "B3", "name": "Gateway burnt" }
+          ]
+        },
+        {
+          "code": "OTHER",
+          "name": "Others",
+          "requiresOriginalText": true,
+          "subcategories": []
+        }
+      ]
+    }
+  ]
+}

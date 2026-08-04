@@ -1,0 +1,23 @@
+{
+  "mapId": "kimbal-product-family-map",
+  "version": "1.0.0",
+  "status": "partial_requires_actual_values",
+  "policy": {
+    "match": "normalized_exact",
+    "aiFallback": false,
+    "unmatchedOutcome": "PRODUCT_FAMILY_UNRESOLVED"
+  },
+  "mappings": [
+    {
+      "sourceField": "Old_Meter_Type",
+      "sourceValue": "LTCT DT",
+      "productFamily": "METER",
+      "basis": "Observed in the supplied FFR IG workbook"
+    }
+  ],
+  "requiredAdditions": [
+    "All other Meter values used in Meter type and Old_Meter_Type",
+    "All NIC values used in Meter type and Old_Meter_Type",
+    "All Gateway values used in Meter type and Old_Meter_Type"
+  ]
+}

@@ -10,22 +10,22 @@ export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const socialImage = `${protocol}://${host}/og.png`;
+  const socialImage = `${protocol}://${host}/og-v2.png`;
   return {
     title: "Kimbal FFR Intelligence",
-    description: "Interactive prototype for agentic field-failure return diagnosis, RCA, CAPA and population learning.",
+    description: "Configurable, evidence-linked field-failure return analysis for Kimbal's file-first pilot.",
     applicationName: "Kimbal FFR Intelligence",
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
     openGraph: {
       title: "Kimbal FFR Intelligence",
-      description: "From returned smart meter to defensible root cause and closed-loop quality learning.",
+      description: "Configurable, evidence-linked analysis with guarded identity and rule gates.",
       type: "website",
       images: [{ url: socialImage, width: 1672, height: 941, alt: "Kimbal FFR Intelligence" }],
     },
     twitter: {
       card: "summary_large_image",
       title: "Kimbal FFR Intelligence",
-      description: "Agentic field-quality operating system prototype.",
+      description: "File-first pilot for governed FFR analysis.",
       images: [socialImage],
     },
   };

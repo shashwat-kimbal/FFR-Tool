@@ -1,0 +1,64 @@
+id: PRODUCT-COMPLAINT-SIGNAL-NNN
+version: 0.1.0
+status: draft
+
+title: Replace with a concise engineering rule name
+purpose: Explain the failure question this rule helps answer
+
+appliesTo:
+  productFamilies: [METER]
+  productModels: ['*']
+  complaintKeys:
+    - METER:F:F1
+
+requires:
+  mandatoryEvidence:
+    - source: DLMS
+      feature: self_diagnostic.main_battery
+  optionalEvidence:
+    - source: IMAGE
+      finding: DISPLAY_OR_BACKLIGHT_STATE
+
+conditions:
+  all:
+    - fact: self_diagnostic.main_battery
+      operator: equals
+      value: false
+  any: []
+  not: []
+
+effects:
+  observations:
+    - code: BATTERY_DIAGNOSTIC_FLAG_OFF
+      severity: warning
+  hypotheses:
+    strengthen:
+      - code: BATTERY_DOMAIN_FAILURE
+        weight: 20
+        reason: Main-battery diagnostic is false in the preserved DLMS package.
+    weaken: []
+    ruleOut: []
+  requiredFollowUp:
+    - type: IMAGE_VIEW
+      code: METER_DISPLAY_SUPPLY_MODE
+
+stopPolicy:
+  allowedOutcome: PROBABLE
+  neverConfirmWithout:
+    - MANUAL_OR_DIRECT_PHYSICAL_VALIDATION
+
+explanation:
+  analyst: Explain what matched, what the rule supports and what it cannot prove.
+  reportSafe: Explain the finding without model scores or unsupported component claims.
+
+governance:
+  owner: unassigned
+  reviewer: unassigned
+  approvedAt: null
+  effectiveFrom: null
+  references: []
+
+fixtures:
+  positive: []
+  negative: []
+  boundary: []

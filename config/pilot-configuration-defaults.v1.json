@@ -1,0 +1,24 @@
+{
+  "configId": "kimbal-ffr-pilot-defaults",
+  "version": "1.0.0",
+  "status": "draft_configurable",
+  "retentionDays": 365,
+  "uploadMaxMb": 50,
+  "ai": {
+    "provider": "Not configured",
+    "credentialReference": "Not configured — server-side secret reference only",
+    "visionEnabled": false,
+    "visionModel": "Configure in Settings",
+    "reasoningModel": "Configure in Settings"
+  },
+  "pilotAccess": {
+    "mode": "Private pilot",
+    "approvedRoles": [
+      "Quality analyst",
+      "Engineering reviewer",
+      "System administrator"
+    ]
+  },
+  "rcaTemplate": "Pilot-generated draft — review required. Available evidence {{evidence_summary}}. Outcome: {{outcome}}. Supported conclusion: {{supported_conclusion}}. Missing or contradictory evidence: {{evidence_gaps}}.",
+  "capaTemplate": "Pilot-generated draft — review required. Containment: {{containment}}. Case correction: {{correction}}. Corrective action: {{corrective_action}}. Preventive action: {{preventive_action}}. Effectiveness: {{effectiveness_metric}}."
+}

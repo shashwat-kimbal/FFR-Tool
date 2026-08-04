@@ -1,0 +1,39 @@
+{
+  "mapId": "kimbal-complaint-synonyms",
+  "version": "1.0.0",
+  "status": "partial_requires_domain_review",
+  "policy": {
+    "match": "normalized_exact_or_configured_contains",
+    "aiFallback": false,
+    "neverInferUnlistedSubcategory": true,
+    "allowCategoryOnly": true
+  },
+  "mappings": [
+    {
+      "productFamily": "METER",
+      "phrases": [
+        "Display Related Issue",
+        "Display Defective",
+        "Display is not working"
+      ],
+      "classification": {
+        "categoryCode": "D",
+        "subcategoryCode": null
+      },
+      "reason": "The supplied wording establishes a display-defect category but does not distinguish D1-D6."
+    },
+    {
+      "productFamily": "METER",
+      "phrases": [
+        "Meter Burnt",
+        "Meter Burnt (Internally)",
+        "Meter is internally Burnt"
+      ],
+      "classification": {
+        "categoryCode": "B",
+        "subcategoryCode": null
+      },
+      "reason": "Internal burn is not equivalent to the listed B1 terminal-burnt or B2 external-body-burnt subcategories."
+    }
+  ]
+}

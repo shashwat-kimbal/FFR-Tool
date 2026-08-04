@@ -2,8 +2,6 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-const root = new URL("../", import.meta.url);
-
 async function render() {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
@@ -15,7 +13,7 @@ async function render() {
   );
 }
 
-test("server-renders the Kimbal FFR prototype", async () => {
+test("server-renders the configurable FFR pilot", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
@@ -23,27 +21,29 @@ test("server-renders the Kimbal FFR prototype", async () => {
   assert.match(html, /<title>Kimbal FFR Intelligence<\/title>/i);
   assert.match(html, /Kimbal/);
   assert.match(html, /FFR Intelligence/);
-  assert.match(html, /Field failures into/);
-  assert.match(html, /DEMO DATA/);
-  assert.match(html, /FFR-2026-04782/);
-  assert.match(html, /og\.png/);
+  assert.match(html, /New FFR analysis/);
+  assert.match(html, /File-first pilot/);
+  assert.match(html, /Rule library/);
+  assert.match(html, /Originals remain unchanged/);
+  assert.match(html, /og-v2\.png/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|Codex is working/i);
 });
 
-test("keeps the complete prototype and project assets wired", async () => {
+test("keeps the configurable pilot and project assets wired", async () => {
   const [page, layout, css, packageJson] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
-  assert.match(page, /Run next recommended test/);
-  assert.match(page, /exportPdf/);
-  assert.match(page, /exportDocx/);
-  assert.match(page, /Quality Reviewer/);
-  assert.match(page, /Synthetic evidence/);
+  assert.match(page, /inspectFiles/);
+  assert.match(page, /evaluateRules/);
+  assert.match(page, /READY_TO_ANALYZE/);
+  assert.match(page, /No source file has been changed/);
+  assert.match(page, /Editable RCA and CAPA templates/);
   assert.match(layout, /generateMetadata/);
-  assert.match(css, /--blue:\s*#087ef8/i);
+  assert.match(css, /--brand:/i);
+  assert.match(packageJson, /"xlsx"/);
   assert.match(packageJson, /"jspdf"/);
   assert.match(packageJson, /"docx"/);
   await Promise.all([
@@ -52,6 +52,7 @@ test("keeps the complete prototype and project assets wired", async () => {
     access(new URL("../public/evidence/meter-opened.png", import.meta.url)),
     access(new URL("../public/evidence/pcb-power-supply.png", import.meta.url)),
     access(new URL("../public/og.png", import.meta.url)),
+    access(new URL("../public/og-v2.png", import.meta.url)),
     access(new URL("../public/stakeholder-overview.html", import.meta.url)),
   ]);
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
