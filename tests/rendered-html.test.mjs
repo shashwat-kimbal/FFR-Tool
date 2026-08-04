@@ -44,6 +44,9 @@ test("keeps the configurable pilot and project assets wired", async () => {
   assert.match(page, /READY_TO_ANALYZE/);
   assert.match(page, /Upload the Kimbal logo/);
   assert.match(page, /Deepu return-module enrichment is not connected/);
+  assert.match(page, /RULE_BUNDLE_INPUT_REQUIRED/);
+  assert.match(page, /Readiness checklist/);
+  assert.doesNotMatch(page, /RULE_BUNDLE_UNAVAILABLE/);
   assert.match(page, /MULTIPLE_FFR_REGISTERS/);
   assert.match(parser, /canonicalField/);
   assert.match(parser, /imageMimeFromSignature/);
