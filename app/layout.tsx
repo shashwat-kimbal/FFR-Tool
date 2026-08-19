@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ShieldCheck } from "lucide-react";
+import { BrandHeader } from "./components/brand-header";
+import { SidebarNav } from "./components/sidebar-nav";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -33,5 +36,32 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body className={`${geistSans.variable} ${geistMono.variable}`}>{children}</body></html>;
+  return (
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <div className="app-shell">
+          <a className="skip-link" href="#main-content">
+            Skip to case intake
+          </a>
+          <aside className="sidebar">
+            <BrandHeader />
+            <SidebarNav />
+            <div className="sidebar-note">
+              <ShieldCheck size={16} />
+              <span>
+                <strong>Exact identity before case inference</strong>
+                <small>
+                  Technical DLMS findings can run first; customer-case
+                  conclusions need a matched meter.
+                </small>
+              </span>
+            </div>
+          </aside>
+          <main className="main" id="main-content">
+            {children}
+          </main>
+        </div>
+      </body>
+    </html>
+  );
 }

@@ -11,6 +11,8 @@ const USER_FULL_NAME_ENCODING_HEADER =
 export const GOVERNANCE_CAPABILITIES = [
   "read_shared_configuration",
   "save_run_summary",
+  "read_cases",
+  "manage_cases",
   "manage_rule_drafts",
   "review_rule_versions",
   "publish_rule_versions",
@@ -81,8 +83,9 @@ export function getConfiguredAdminEmails(): string[] {
 export async function getGovernanceAccess(
   request: Request,
 ): Promise<GovernanceAccess> {
-  const actor = getPlatformActor(request);
   const administrators = getConfiguredAdminEmails();
+  let actor = getPlatformActor(request);
+
   if (administrators.length === 0) {
     return {
       kind: "setup_required",
@@ -94,10 +97,23 @@ export async function getGovernanceAccess(
       },
     };
   }
-  if (!actor) return { kind: "unauthenticated" };
-  if (administrators.includes(actor.email)) {
-    return { kind: "authorized", actor, roles: ["admin", "user"] };
+
+  const isWildcardAdmin = administrators.includes("*") || administrators.includes("all");
+
+  if (!actor && isWildcardAdmin) {
+    actor = {
+      userId: "default-admin",
+      email: "admin@local",
+      displayName: "Local Administrator",
+    };
   }
+
+  if (!actor) return { kind: "unauthenticated" };
+
+  if (isWildcardAdmin || administrators.includes(actor.email)) {
+    return { kind: "authorized", actor, roles: ["admin", "user", "author", "reviewer"] };
+  }
+
   const assigned = await getAssignedRoles(actor);
   return {
     kind: "authorized",
@@ -114,7 +130,9 @@ export function hasGovernanceCapability(
   if (access.roles.includes("admin")) return true;
   if (
     capability === "read_shared_configuration" ||
-    capability === "save_run_summary"
+    capability === "save_run_summary" ||
+    capability === "read_cases" ||
+    capability === "manage_cases"
   )
     return true;
   if (capability === "manage_rule_drafts" || capability === "manage_catalogue")

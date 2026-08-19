@@ -21,31 +21,37 @@ test("server-renders the configurable FFR pilot", async () => {
   assert.match(html, /<title>Kimbal FFR Intelligence<\/title>/i);
   assert.match(html, /Kimbal/);
   assert.match(html, /FFR Intelligence/);
-  assert.match(html, /Register-first case intake/);
+  assert.match(html, /FFR case register/);
   assert.match(html, /FFR register/);
-  assert.match(html, /Case and meter/);
-  assert.match(html, /Rule bundle/);
+  assert.match(html, /Rule library/);
   assert.match(html, /Development proof of concept/);
   assert.doesNotMatch(html, /og-v2\.png/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|Codex is working/i);
 });
 
 test("keeps the configurable pilot and project assets wired", async () => {
-  const [page, parser, layout, css, packageJson] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/lib/workbook-parser.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
-    readFile(new URL("../package.json", import.meta.url), "utf8"),
-  ]);
+  // The former single-page wizard is now split across routed pages
+  // (persistence + navigation refactor); each assertion below now checks
+  // whichever page actually owns that behavior.
+  const [page, caseDetail, governancePage, settingsPage, parser, layout, css, packageJson] =
+    await Promise.all([
+      readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/cases/[caseId]/page.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/governance/page.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/settings/page.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/lib/workbook-parser.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+      readFile(new URL("../package.json", import.meta.url), "utf8"),
+    ]);
   assert.match(page, /inspectFfrRegister/);
-  assert.match(page, /inspectDlmsWorkbook/);
-  assert.match(page, /inspectImageEvidence/);
-  assert.match(page, /READY_TO_ANALYZE/);
-  assert.match(page, /Upload the Kimbal logo/);
+  assert.match(caseDetail, /inspectDlmsWorkbook/);
+  assert.match(caseDetail, /inspectImageEvidence/);
+  assert.match(caseDetail, /READY_TO_ANALYZE/);
+  assert.match(settingsPage, /Upload the Kimbal logo/);
   assert.match(page, /Deepu return-module enrichment is not connected/);
-  assert.match(page, /RULE_BUNDLE_INPUT_REQUIRED/);
-  assert.match(page, /Readiness checklist/);
+  assert.match(governancePage, /RULE_BUNDLE_INPUT_REQUIRED/);
+  assert.match(governancePage, /Readiness checklist/);
   assert.doesNotMatch(page, /RULE_BUNDLE_UNAVAILABLE/);
   assert.match(page, /MULTIPLE_FFR_REGISTERS/);
   assert.match(parser, /canonicalField/);

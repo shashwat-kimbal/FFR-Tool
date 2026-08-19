@@ -290,6 +290,77 @@ export const storedObjects = sqliteTable(
   ],
 );
 
+export const cases = sqliteTable(
+  "cases",
+  {
+    id: text("id").primaryKey(),
+    caseRef: text("case_ref").notNull(),
+    registerArtifactName: text("register_artifact_name").notNull(),
+    registerRowNumber: integer("register_row_number").notNull(),
+    registerRowJson: text("register_row_json").notNull(),
+    productFamily: text("product_family"),
+    complaintKey: text("complaint_key"),
+    complaintLabel: text("complaint_label"),
+    createdByUserId: text("created_by_user_id").notNull(),
+    createdByEmail: text("created_by_email").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_cases_case_ref").on(table.caseRef, table.createdAt),
+    index("idx_cases_created").on(table.createdAt),
+  ],
+);
+
+export const caseMeters = sqliteTable(
+  "case_meters",
+  {
+    id: text("id").primaryKey(),
+    caseId: text("case_id").notNull(),
+    role: text("role").notNull(),
+    meterSerial: text("meter_serial"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("case_meters_case_role_unique").on(table.caseId, table.role),
+    index("idx_case_meters_serial").on(table.meterSerial),
+  ],
+);
+
+export const dlmsReports = sqliteTable(
+  "dlms_reports",
+  {
+    id: text("id").primaryKey(),
+    caseId: text("case_id").notNull(),
+    caseMeterId: text("case_meter_id").notNull(),
+    meterRole: text("meter_role").notNull(),
+    meterSerial: text("meter_serial"),
+    expectedMeterId: text("expected_meter_id").notNull().default(""),
+    identityState: text("identity_state").notNull(),
+    artifactJson: text("artifact_json").notNull(),
+    featuresJson: text("features_json").notNull(),
+    messagesJson: text("messages_json").notNull(),
+    analysisJson: text("analysis_json"),
+    bundleId: text("bundle_id"),
+    bundleVersion: integer("bundle_version"),
+    profileKey: text("profile_key"),
+    profileVersion: integer("profile_version"),
+    adapterKey: text("adapter_key"),
+    adapterVersion: integer("adapter_version"),
+    findingsCount: integer("findings_count").notNull().default(0),
+    attentionCount: integer("attention_count").notNull().default(0),
+    highCount: integer("high_count").notNull().default(0),
+    createdByUserId: text("created_by_user_id").notNull(),
+    createdByEmail: text("created_by_email").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_dlms_reports_case_created").on(table.caseId, table.createdAt),
+    index("idx_dlms_reports_meter_created").on(table.caseMeterId, table.createdAt),
+  ],
+);
+
 export const governanceAuditEvents = sqliteTable(
   "governance_audit_events",
   {
