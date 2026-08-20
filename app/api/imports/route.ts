@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomUUID } from "node:crypto";
 import * as XLSX from "xlsx";
 import { getDb } from "@/server/store/db.ts";
-import { seedDatabase } from "@/server/store/seed.ts";
 
 export interface ReconciliationRow {
   rowNumber: number;
@@ -20,7 +19,6 @@ export interface ReconciliationRow {
 }
 
 export async function POST(request: NextRequest) {
-  seedDatabase();
   const db = getDb();
 
   let fileBuffer: Buffer;
@@ -76,7 +74,7 @@ export async function POST(request: NextRequest) {
     const subDivision = String(r["Sub-Division"] || r["SubDivision"] || r["Feeder"] || "Lakhipur_bec").trim();
     const defectTrigger = String(r["Defect Trigger"] || r["Symptoms of the problem New"] || r["Complaint"] || "Meter Burnt").trim();
     const fieldObs = String(r["Field Observation"] || r["Field Person visit Observation Report"] || defectTrigger).trim();
-    const defectDate = "2026-06-16";
+    const defectDate = String(r["Date"] || r["Defect Date"] || r["Complaint Date"] || "").trim();
 
     // Validate rejection
     if (!meterOld) {
@@ -130,19 +128,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // If preview has fewer than 5 rows, generate realistic sample reconciliation rows for preview
-  if (rawRows.length < 5) {
-    const additionalSamples: ReconciliationRow[] = [
-      { rowNumber: 4, caseRef: "13650", meterOld: "AS2374001", meterNew: "SC10231990", complaintKey: "METER:B", complaintLabel: "Meter burnt", subDivision: "Lakhipur_bec", defectDate: "2026-06-16", fieldObservation: "Meter burnt internally", status: "will_create" },
-      { rowNumber: 5, caseRef: "13651", meterOld: "AS2374002", meterNew: "SC10231991", complaintKey: "METER:D", complaintLabel: "Display defective", subDivision: "Basugaon", defectDate: "2026-06-16", fieldObservation: "Display is blank", status: "will_create" },
-      { rowNumber: 6, caseRef: "13644", meterOld: "AS2373952", meterNew: "SC10231275", complaintKey: "METER:B", complaintLabel: "Meter burnt", subDivision: "Lakhipur_bec", defectDate: "2026-06-16", fieldObservation: "Meter is internally Burnt", status: "exists", existingCaseId: "13644" },
-      { rowNumber: 7, caseRef: "13652", meterOld: "—", complaintKey: "METER:B", complaintLabel: "Meter dead", subDivision: "Abhayapuri", defectDate: "2026-06-16", fieldObservation: "Meter dead", status: "rejected", rejectionReason: "rejected: Old_Meter_Number is empty" },
-    ];
-    previewRows.push(...additionalSamples);
-    newRowsCount += 2;
-    existingRowsCount += 1;
-    rejectedRowsCount += 1;
-  }
+
 
   const importId = randomUUID();
   const insertImport = db.prepare(`

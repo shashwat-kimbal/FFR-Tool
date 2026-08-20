@@ -66,12 +66,12 @@ export default function ImportPreviewPage() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-4">
         <div className="flex items-center gap-3">
-          <Link
+          <a
             href="/queue"
             className="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft size={18} />
-          </Link>
+          </a>
           <div>
             <h1 className="text-xl font-bold text-white">
               Import · {filename}
@@ -83,12 +83,12 @@ export default function ImportPreviewPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
+          <a
             href="/queue"
             className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
           >
             Cancel
-          </Link>
+          </a>
           <button
             type="button"
             onClick={handleCommit}
@@ -170,12 +170,12 @@ export default function ImportPreviewPage() {
                       <span className="text-slate-400 flex items-center gap-1.5">
                         exists — imported 6 Aug
                         {row.existingCaseId && (
-                          <Link
+                          <a
                             href={`/cases/${row.existingCaseId}/verdict`}
                             className="text-blue-400 hover:underline inline-flex items-center gap-0.5 ml-1"
                           >
                             [ open <ExternalLink size={10} /> ]
-                          </Link>
+                          </a>
                         )}
                       </span>
                     )}

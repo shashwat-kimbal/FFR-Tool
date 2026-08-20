@@ -79,7 +79,7 @@ export default function ForgeClientView({
         <div>
           <h1 className="page-title">
             <Sparkles size={20} className="text-blue-400" />
-            Rule Forge — Agentic Authoring
+            Rule Forge — Agentic Authoring <span className="text-red-500 font-bold ml-4 border border-red-500 px-2 py-1 rounded text-xs bg-red-900/20">SIMULATED</span>
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
             The analyst points; the multi-agent system grounds, calibrates against corpus data, and backtests.
@@ -88,24 +88,24 @@ export default function ForgeClientView({
 
         {/* Subnav links */}
         <div className="flex items-center gap-2 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
-          <Link
+          <a
             href="/knowledge/mechanisms"
             className="px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-white"
           >
             Mechanisms
-          </Link>
-          <Link
+          </a>
+          <a
             href="/knowledge/rules"
             className="px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-white"
           >
             Rules (60)
-          </Link>
-          <Link
+          </a>
+          <a
             href="/knowledge/rules/forge"
             className="px-3 py-1.5 rounded-md font-semibold bg-blue-600 text-white"
           >
             Rule Forge
-          </Link>
+          </a>
         </div>
       </div>
 
@@ -116,9 +116,9 @@ export default function ForgeClientView({
             <CheckCircle2 size={16} className="text-emerald-400" />
             <span className="font-semibold">{shippedToast}</span>
           </div>
-          <Link href="/queue" className="underline hover:text-white font-mono">
+          <a href="/queue" className="underline hover:text-white font-mono">
             View queue →
-          </Link>
+          </a>
         </div>
       )}
 

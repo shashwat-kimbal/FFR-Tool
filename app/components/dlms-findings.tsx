@@ -1,7 +1,7 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
-import type { DlmsAnalysis, DlmsFinding } from "../lib/dlms-analysis";
+import type { DlmsAnalysis, DlmsFinding } from "@/server/rules/dlms-analysis";
 import { Card, SectionHead, Status } from "./ui";
 
 export type FindingFilter = "all" | "attention" | "not_assessed";

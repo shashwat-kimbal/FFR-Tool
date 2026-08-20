@@ -32,24 +32,24 @@ export default function MechanismsClientView({
 
         {/* Subnav links */}
         <div className="flex items-center gap-2 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
-          <Link
+          <a
             href="/knowledge/mechanisms"
             className="px-3 py-1.5 rounded-md font-semibold bg-blue-600 text-white"
           >
             Mechanisms ({mechanisms.length})
-          </Link>
-          <Link
+          </a>
+          <a
             href="/knowledge/rules"
             className="px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-white"
           >
             Rules (60)
-          </Link>
-          <Link
+          </a>
+          <a
             href="/knowledge/rules/forge"
             className="px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-white"
           >
             Rule Forge
-          </Link>
+          </a>
         </div>
       </div>
 

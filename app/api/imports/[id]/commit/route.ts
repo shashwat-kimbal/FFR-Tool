@@ -51,9 +51,10 @@ export async function POST(
       }
     }
   } else {
-    // Default fallback commit for mock import
-    createdCount = 19;
-    skippedCount = 5;
+    return NextResponse.json(
+      { success: false, error: "Import not found" },
+      { status: 404 }
+    );
   }
 
   return NextResponse.json({

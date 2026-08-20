@@ -80,9 +80,8 @@ class MockStatement {
     if (this.sql.includes("SELECT * FROM cases WHERE id = ?")) {
       return globalStore.cases.filter((c: any) => c.id === params[0]);
     }
-    // 2. SELECT COUNT(*) as count FROM cases
-    if (this.sql.includes("SELECT COUNT(*) as count FROM cases") && !this.sql.includes("WHERE")) {
-      return [{ count: globalStore.cases.length }];
+    if (this.sql.includes("SELECT COUNT(*) as c FROM cases") && !this.sql.includes("WHERE")) {
+      return [{ c: globalStore.cases.length }];
     }
     if (this.sql.includes("SELECT COUNT(*) as c FROM cases WHERE assignee_email = 'SS' AND status != 'closed'")) {
       return [{ c: globalStore.cases.filter((c: any) => c.assignee_email === 'SS' && c.status !== 'closed').length }];

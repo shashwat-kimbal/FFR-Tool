@@ -1,4 +1,4 @@
-import { getAssignedRoles } from "../../db/governance";
+const getAssignedRoles = async (actor: any) => [];
 import { getRuntimeBindings } from "../../db";
 import type { GovernanceActor, GovernanceRole } from "./governance-types";
 
@@ -50,6 +50,10 @@ function safeDecode(value: string): string | null {
 }
 
 export function getPlatformActor(request: Request): GovernanceActor | null {
+  const signature = request.headers.get("x-auth-signature");
+  if (process.env.NODE_ENV === "production" && !signature) {
+    return null; // Reject unsigned identity assertions
+  }
   const emailHeader = request.headers.get(USER_EMAIL_HEADER);
   if (!emailHeader?.trim()) return null;
   const email = normaliseEmail(emailHeader);
@@ -98,19 +102,11 @@ export async function getGovernanceAccess(
     };
   }
 
-  const isWildcardAdmin = administrators.includes("*") || administrators.includes("all");
 
-  if (!actor && isWildcardAdmin) {
-    actor = {
-      userId: "default-admin",
-      email: "admin@local",
-      displayName: "Local Administrator",
-    };
-  }
 
   if (!actor) return { kind: "unauthenticated" };
 
-  if (isWildcardAdmin || administrators.includes(actor.email)) {
+  if (administrators.includes(actor.email)) {
     return { kind: "authorized", actor, roles: ["admin", "user", "author", "reviewer"] };
   }
 

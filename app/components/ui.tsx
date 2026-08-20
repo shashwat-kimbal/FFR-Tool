@@ -2,7 +2,7 @@
 
 import { useRef, type ChangeEvent, type ReactNode } from "react";
 import { FileImage, FileSpreadsheet, Upload } from "lucide-react";
-import type { UploadedArtifact } from "../lib/pilot-types";
+import type { UploadedArtifact } from "@/server/ingest/pilot-types";
 
 export function Status({
   tone = "neutral",

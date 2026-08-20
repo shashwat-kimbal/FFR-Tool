@@ -9,10 +9,10 @@ export default function RulesKnowledgePage() {
 
     return {
       id: r.id,
-      name: r.name,
+      name: (r as any).title,
       group: r.group,
       severity: r.severity,
-      description: r.description,
+      description: r.why,
       why: r.why,
       limitation: r.limitation,
       followUp: r.followUp,

@@ -85,7 +85,7 @@ export async function POST(
       };
 
       // Check identity match
-      if (foundSerial.toLowerCase() !== caseRow.meter_old.toLowerCase() && !caseRow.meter_old.includes("AS2373952")) {
+      if (foundSerial.toLowerCase() !== caseRow.meter_old.toLowerCase()) {
         identityMatched = false;
         db.prepare(`
           UPDATE cases

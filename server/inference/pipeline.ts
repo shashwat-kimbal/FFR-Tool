@@ -124,7 +124,7 @@ export function runFullAnalysisPipeline(
   const expectedOld = caseInfo.meterOld.trim();
   const isMatch = foundSerial.toLowerCase() === expectedOld.toLowerCase();
 
-  if (!isMatch && expectedOld && !expectedOld.includes("AS2373952")) {
+  if (!isMatch && expectedOld) {
     steps.push({
       step: 3,
       name: "Identity",
@@ -147,8 +147,8 @@ export function runFullAnalysisPipeline(
       steps,
       facts: {
         sheetCount: wb.SheetNames.length,
-        profileRowCount: 3360,
-        totalEvents: 244,
+        profileRowCount: 0,
+        totalEvents: 0,
         meterSerial: foundSerial,
         fileSize,
         fileSha256: sha256,
@@ -169,7 +169,7 @@ export function runFullAnalysisPipeline(
   const s4Start = Date.now();
   const profileSheet = wb.Sheets["BlockLoadProfile"];
   const profileRows: any[] = profileSheet ? XLSX.utils.sheet_to_json(profileSheet, { range: 12 }) : [];
-  const profileCount = Math.max(3360, profileRows.length);
+  const profileCount = profileRows.length;
 
   // Extract voltages & timestamps
   const voltages: number[] = [];
@@ -206,7 +206,7 @@ export function runFullAnalysisPipeline(
     step: 4,
     name: "Features derived",
     status: "completed",
-    summary: `${profileCount} profile rows → 41 features`,
+    summary: `${profileCount} profile rows → features derived`,
     durationMs: Date.now() - s4Start,
   });
 
@@ -216,57 +216,27 @@ export function runFullAnalysisPipeline(
     step: 5,
     name: "Rules evaluating",
     status: "completed",
-    summary: "60 / 60 · ruleset v3",
+    summary: "ruleset evaluated",
     durationMs: Date.now() - s5Start,
   });
 
   // Step 6: Pattern Detection
   const s6Start = Date.now();
-  const dose = analyzeDose(
-    voltages.length ? voltages : [240, 255, 260, 258, 230, 0, 0, 0],
-    timestamps.length ? timestamps : ["2026-03-28", "2026-04-10", "2026-05-15", "2026-06-01", "2026-06-05"],
-    253,
-    207,
-  );
-  // Ensure fixture truth values
-  dose.totalSamples = 3360;
-  dose.percentAboveUpper = 9.1;
-  dose.peakVoltage = 260.6;
+  const dose = analyzeDose(voltages, timestamps, 253, 207);
 
-  const truncation = analyzeTruncation(
-    records.length
-      ? records
-      : [
-          { timestamp: "2026-06-01T12:00:00Z", voltage: 230, current: 5 },
-          { timestamp: "2026-06-05T18:30:00Z", voltage: 0, current: 0 },
-          { timestamp: "2026-06-29T19:00:00Z", voltage: 0, current: 0 },
-        ],
-    caseInfo.defectDate || "2026-06-16",
-  );
-  truncation.lastLiveTs = "2026-06-05 18:30:00";
-  truncation.terminalVoltages = [0, 0, 0];
-  truncation.silenceDays = 24.0;
-  truncation.resumedInService = false;
-  truncation.detectionLagDays = 11;
+  const truncation = analyzeTruncation(records, caseInfo.defectDate);
 
   const censoredStreams = {
-    powerEvent: analyzeCensoredStream("PowerRelatedEvent", 50, powerTimes.length ? powerTimes : ["2026-05-31", "2026-06-30"], 50),
-    otherEvent: analyzeCensoredStream("OtherEvent", 50, otherTimes.length ? otherTimes : ["2026-05-19", "2026-06-05"], 50),
-    voltageEvent: analyzeCensoredStream("VoltageRelatedEvent", 50, voltageTimes.length ? voltageTimes : ["2026-01-08", "2026-06-01"], 50),
-    currentEvent: analyzeCensoredStream("CurrentRelatedEvent", 50, currentTimes.length ? currentTimes : ["2024-12-14", "2024-12-18"], 50),
+    powerEvent: analyzeCensoredStream("PowerRelatedEvent", 50, powerTimes, 50),
+    otherEvent: analyzeCensoredStream("OtherEvent", 50, otherTimes, 50),
+    voltageEvent: analyzeCensoredStream("VoltageRelatedEvent", 50, voltageTimes, 50),
+    currentEvent: analyzeCensoredStream("CurrentRelatedEvent", 50, currentTimes, 50),
   };
-  censoredStreams.powerEvent.ratePerDay = 1.67;
-  censoredStreams.powerEvent.spanDays = 30;
-  censoredStreams.otherEvent.ratePerDay = 2.94;
-  censoredStreams.otherEvent.spanDays = 17;
-  censoredStreams.voltageEvent.ratePerDay = 0.35;
-  censoredStreams.voltageEvent.spanDays = 144;
-  censoredStreams.currentEvent.stalenessDays = 560;
 
   const coincidence = analyzeCoincidence({
-    power: ["2026-06-01T01:08:00Z", "2026-06-01T03:14:00Z", "2026-06-01T06:25:00Z"],
-    other: ["2026-06-01T00:32:00Z", "2026-06-01T01:28:00Z", "2026-06-01T03:28:00Z"],
-    voltage: ["2026-06-01T15:47:00Z"],
+    power: powerTimes,
+    other: otherTimes,
+    voltage: voltageTimes,
   });
 
   const decoupling = analyzeDecoupling(records);
@@ -306,7 +276,7 @@ export function runFullAnalysisPipeline(
     step: 7,
     name: "Hypotheses",
     status: "completed",
-    summary: `Attribution: ${verdict.leadingMechanism.name} (0.71)`,
+    summary: `Attribution: ${verdict.leadingMechanism.name} (${verdict.posteriorProbability.toFixed(2)})`,
     durationMs: Date.now() - s7Start,
   });
 
@@ -317,7 +287,7 @@ export function runFullAnalysisPipeline(
     facts: {
       sheetCount: wb.SheetNames.length,
       profileRowCount: profileCount,
-      totalEvents: 244,
+      totalEvents: powerTimes.length + voltageTimes.length + otherTimes.length + currentTimes.length,
       meterSerial: foundSerial,
       fileSize,
       fileSha256: sha256,

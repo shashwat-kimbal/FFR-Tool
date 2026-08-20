@@ -57,29 +57,29 @@ export default function RulesClientView({
         {/* Subnav & Teach Action */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
-            <Link
+            <a
               href="/knowledge/mechanisms"
               className="px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-white"
             >
               Mechanisms
-            </Link>
-            <Link
+            </a>
+            <a
               href="/knowledge/rules"
               className="px-3 py-1.5 rounded-md font-semibold bg-blue-600 text-white"
             >
               Rules (60)
-            </Link>
-            <Link
+            </a>
+            <a
               href="/knowledge/rules/forge"
               className="px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-white"
             >
               Rule Forge
-            </Link>
+            </a>
           </div>
 
-          <Link href="/knowledge/rules/forge" className="btn btn-primary">
+          <a href="/knowledge/rules/forge" className="btn btn-primary">
             <Plus size={14} /> Teach a new rule
-          </Link>
+          </a>
         </div>
       </div>
 

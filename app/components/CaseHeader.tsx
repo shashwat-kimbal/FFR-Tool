@@ -59,12 +59,12 @@ export function CaseHeader({
         {/* Left: Identity & Sublines */}
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <Link
+            <a
               href="/queue"
               className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
             >
               <ChevronLeft size={14} /> Queue
-            </Link>
+            </a>
             <span className="font-mono text-lg font-bold text-white tracking-tight">
               {caseData.case_ref}
             </span>
@@ -95,12 +95,12 @@ export function CaseHeader({
         {/* Right: Primary Action depending on status */}
         <div className="flex items-center gap-3 relative">
           {caseData.status === "open" && (
-            <Link
+            <a
               href={`/cases/${id}/evidence`}
               className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/30 transition-colors"
             >
               Attach evidence
-            </Link>
+            </a>
           )}
 
           {caseData.status === "evidence_ready" && (
@@ -115,12 +115,12 @@ export function CaseHeader({
           )}
 
           {caseData.status === "blocked" && (
-            <Link
+            <a
               href={`/cases/${id}/evidence`}
               className="px-4 py-2 rounded-md bg-red-700 hover:bg-red-600 text-white text-xs font-semibold shadow-md shadow-red-700/30 transition-colors"
             >
               Resolve stop state
-            </Link>
+            </a>
           )}
 
           {caseData.status === "analysed" && (
@@ -224,7 +224,7 @@ export function CaseHeader({
         {tabs.map((t) => {
           const isActive = pathname.startsWith(t.href);
           return (
-            <Link
+            <a
               key={t.label}
               href={t.href}
               className={`py-2.5 px-4 text-xs font-medium border-b-2 transition-colors ${
@@ -234,7 +234,7 @@ export function CaseHeader({
               }`}
             >
               {t.label}
-            </Link>
+            </a>
           );
         })}
       </div>

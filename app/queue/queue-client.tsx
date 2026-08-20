@@ -84,8 +84,7 @@ export default function QueueClientView() {
     }
   };
 
-  const toggleSelect = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
@@ -106,9 +105,9 @@ export default function QueueClientView() {
             ({total} cases)
           </span>
         </h1>
-        <Link href="/imports/new" className="btn btn-primary">
+        <a href="/imports/new" className="btn btn-primary">
           <Upload size={14} /> Import register
-        </Link>
+        </a>
       </div>
 
       {/* Filter Row (52px) (§4.1) */}
@@ -350,9 +349,9 @@ export default function QueueClientView() {
                 Clear filters
               </button>
             ) : (
-              <Link href="/imports/new" className="btn btn-primary">
+              <a href="/imports/new" className="btn btn-primary">
                 Import register
-              </Link>
+              </a>
             )}
           </div>
         ) : (
@@ -401,7 +400,7 @@ export default function QueueClientView() {
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={() => toggleSelect(c.id, {} as any)}
+                            onChange={() => toggleSelect(c.id)}
                             className="cursor-pointer"
                           />
                         </td>

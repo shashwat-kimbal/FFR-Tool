@@ -1,8 +1,8 @@
 "use client";
 
-import { caseDisplayGroups } from "../lib/pilot-config";
-import { canonicalField, ffrValue } from "../lib/workbook-parser";
-import type { FfrRow } from "../lib/pilot-types";
+import { caseDisplayGroups } from "@/server/ingest/pilot-config";
+import { canonicalField, ffrValue } from "@/server/ingest/workbook-parser";
+import type { FfrRow } from "@/server/ingest/pilot-types";
 
 export function CaseDetailsList({ row }: { row: FfrRow }) {
   return (

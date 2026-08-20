@@ -15,7 +15,7 @@ const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
   vars: {
-    ADMIN_ALLOWLIST: "*",
+    ADMIN_ALLOWLIST: "",
   },
   d1_databases: d1
     ? [

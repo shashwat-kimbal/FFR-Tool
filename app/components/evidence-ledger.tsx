@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, XCircle, HelpCircle, Layers } from "lucide-react";
-import type { EvidenceLedgerItem } from "../lib/verdict-engine";
+import type { EvidenceLedgerItem } from "@/server/inference/verdict-engine";
 import { Card, SectionHead } from "./ui";
 
 interface EvidenceLedgerPanelProps {
@@ -40,7 +40,7 @@ export function EvidenceLedgerPanel({ ledger }: EvidenceLedgerPanelProps) {
                       +{item.likelihoodRatio.toFixed(1)}× LR
                     </span>
                   </div>
-                  <p className="text-slate-600 leading-snug">{item.description}</p>
+                  <p className="text-slate-600 leading-snug">{item.title}</p>
                 </div>
               ))
             )}
@@ -65,7 +65,7 @@ export function EvidenceLedgerPanel({ ledger }: EvidenceLedgerPanelProps) {
                       {item.likelihoodRatio.toFixed(2)}× LR
                     </span>
                   </div>
-                  <p className="text-slate-600 leading-snug">{item.description}</p>
+                  <p className="text-slate-600 leading-snug">{item.title}</p>
                 </div>
               ))
             )}
@@ -90,7 +90,7 @@ export function EvidenceLedgerPanel({ ledger }: EvidenceLedgerPanelProps) {
                       1.0× LR (Neutral)
                     </span>
                   </div>
-                  <p className="text-slate-500 leading-snug">{item.description}</p>
+                  <p className="text-slate-500 leading-snug">{item.title}</p>
                 </div>
               ))
             )}

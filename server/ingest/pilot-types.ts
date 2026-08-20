@@ -147,7 +147,7 @@ export interface DlmsInspection {
   expectedMeterId: string;
   identityState: "READY_TO_ANALYZE" | "IDENTITY_NO_MATCH" | "AWAITING_FILES";
   features: DerivedFeature[];
-  analysis?: import("./dlms-analysis").DlmsAnalysis;
+  analysis?: import("../rules/dlms-analysis").DlmsAnalysis;
   messages: string[];
 }
 

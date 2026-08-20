@@ -59,12 +59,12 @@ export function StopState({
 
       {/* Exactly Two Actions (§5.7) */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-        <Link
+        <a
           href={`/cases/${caseId}/evidence`}
           className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-lg shadow-red-600/30 transition-colors flex items-center justify-center gap-2"
         >
           <RefreshCw size={14} /> Attach the correct report
-        </Link>
+        </a>
         <button
           type="button"
           onClick={() => alert(`Prompt to correct meter serial on Case ${caseId}`)}

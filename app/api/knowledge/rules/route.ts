@@ -17,10 +17,10 @@ export async function GET(request: NextRequest) {
 
     return {
       id: r.id,
-      name: r.name,
+      name: r.title,
       group: r.group,
       severity: r.severity,
-      description: r.description,
+      description: r.why,
       why: r.why,
       limitation: r.limitation,
       followUp: r.followUp,

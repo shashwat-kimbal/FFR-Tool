@@ -15,7 +15,8 @@ export default function CaseLayout({ children }: { children: React.ReactNode }) 
   // Robust ID resolution from params or pathname
   const idFromParams = params?.id ? String(params.id) : "";
   const idFromPath = typeof window !== "undefined" ? window.location.pathname.split("/")[2] : "";
-  const id = idFromParams || idFromPath || "13644";
+  const id = idFromParams || idFromPath;
+  if (!id) return <div>Case not found</div>;
 
   const [caseData, setCaseData] = useState<CaseRow | null>(null);
   const [evidenceCount, setEvidenceCount] = useState(2);

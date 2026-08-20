@@ -417,12 +417,12 @@ export default function TimelineClientView({
               >
                 Explain this window
               </button>
-              <Link
+              <a
                 href={`/knowledge/rules/forge?caseId=${caseId}&series=${channel}&from=${encodeURIComponent(brushedRange.from)}&to=${encodeURIComponent(brushedRange.to)}`}
                 className="btn btn-primary btn-sm"
               >
                 Teach a rule from this →
-              </Link>
+              </a>
             </div>
           </div>
         )}

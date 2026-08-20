@@ -86,7 +86,7 @@ export function AppShell({ children }: AppShellProps) {
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
-              <Link
+              <a
                 key={item.label}
                 href={item.href}
                 className={`rail-nav-item ${item.active ? "active" : ""}`}
@@ -94,7 +94,7 @@ export function AppShell({ children }: AppShellProps) {
               >
                 <Icon size={18} className="rail-item-icon" />
                 <span className="rail-item-label">{item.label}</span>
-              </Link>
+              </a>
             );
           })}
         </nav>

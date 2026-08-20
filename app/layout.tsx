@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { THEME_CSS } from "./theme-css";
+import "./globals.css";
 import { AppShell } from "./components/AppShell";
 
 export const metadata: Metadata = {
@@ -15,7 +15,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        <style id="ffr-theme" dangerouslySetInnerHTML={{ __html: THEME_CSS }} />
       </head>
       <body>
         <AppShell>{children}</AppShell>

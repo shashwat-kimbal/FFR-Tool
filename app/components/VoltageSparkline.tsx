@@ -48,7 +48,7 @@ export function VoltageSparkline({ pointsJson, summaryJson }: VoltageSparklinePr
     const norm = Math.max(0, Math.min(1, (pt.avgV - minVal) / (maxVal - minVal)));
     const y = height - paddingY - norm * (height - paddingY * 2);
 
-    if (pt.truncated && !truncationPos) {
+    if ((pt as any).truncated && !truncationPos) {
       truncationPos = { x, y };
     }
 
@@ -105,13 +105,7 @@ export function VoltageSparkline({ pointsJson, summaryJson }: VoltageSparklinePr
 
         {svgSegments}
 
-        {/* Truncation marker ✕ */}
-        {truncationPos && (
-          <g transform={`translate(${truncationPos.x}, ${Math.min(height - 4, Math.max(4, truncationPos.y))})`}>
-            <line x1="-3" y1="-3" x2="3" y2="3" stroke="#ef4444" strokeWidth="1.5" />
-            <line x1="3" y1="-3" x2="-3" y2="3" stroke="#ef4444" strokeWidth="1.5" />
-          </g>
-        )}
+
       </svg>
 
       {hovered && summary && (

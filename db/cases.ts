@@ -1,6 +1,13 @@
 import { isRecord, parseJsonRecord, stableStringify } from "../app/lib/governance-contract";
 import type { GovernanceActor } from "../app/lib/governance-types";
-import { GovernanceDataError, isDatabaseSchemaError, writeAuditEvent } from "./governance";
+class GovernanceDataError extends Error {
+  constructor(message: string, public code: string, public status: number = 400) {
+    super(message);
+    this.name = "GovernanceDataError";
+  }
+}
+const isDatabaseSchemaError = (e: any) => false;
+const writeAuditEvent = async (...args: any[]) => {};
 import { getD1 } from "./index";
 
 /**

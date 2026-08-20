@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type CaseRow } from "@/server/store/db.ts";
-import { seedDatabase } from "@/server/store/seed.ts";
 
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
-  seedDatabase();
   const db = getDb();
   const { id } = await context.params;
 

@@ -190,12 +190,12 @@ export default function VerdictClientView({
             </div>
           </div>
 
-          <Link
+          <a
             href={primaryNextTest.queryParam || "/cohorts/feeder/Lakhipur_bec"}
             className="btn btn-primary btn-sm"
           >
             Run this now →
-          </Link>
+          </a>
         </div>
       </section>
 

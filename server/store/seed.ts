@@ -116,8 +116,8 @@ function generateDailySparkline(
 
 export function seedDatabase(force = false) {
   const db = getDb();
-  const countRow = db.prepare("SELECT COUNT(*) as count FROM cases").get() as { count: number };
-  if (countRow.count >= 214 && !force) {
+  const countRow = db.prepare("SELECT COUNT(*) as c FROM cases").get() as { c: number };
+  if (countRow.c >= 214 && !force) {
     return;
   }
 

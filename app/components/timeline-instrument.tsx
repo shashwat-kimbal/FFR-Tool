@@ -1,7 +1,7 @@
 "use client";
 
 import { Activity, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
-import type { FirstPrinciplesPatterns } from "../lib/first-principles-patterns";
+import type { FirstPrinciplesPatterns } from "@/server/inference/patterns";
 import { Card, SectionHead, Status } from "./ui";
 
 export function TimelineInstrument({ patterns }: { patterns: FirstPrinciplesPatterns }) {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, AlertCircle, ArrowRight, ShieldCheck, Zap, Activity } from "lucide-react";
-import type { VerdictObject } from "../lib/verdict-engine";
+import type { VerdictObject } from "@/server/inference/verdict-engine";
 import { Card, SectionHead, Status } from "./ui";
 
 interface VerdictPanelProps {
@@ -40,7 +40,7 @@ export function VerdictPanel({ verdict, onAdjudicate }: VerdictPanelProps) {
               {leading.family.toUpperCase()} FAMILY
             </Status>
             <Status tone="good">
-              {(verdict.cappedProbability * 100).toFixed(0)}% POSTERIOR (CAPPED)
+              {(verdict.posteriorProbability * 100).toFixed(0)}% POSTERIOR (CAPPED)
             </Status>
           </div>
         }
@@ -88,31 +88,22 @@ export function VerdictPanel({ verdict, onAdjudicate }: VerdictPanelProps) {
       </div>
 
       {/* Next Best Test Panel (§7.4) */}
-      {verdict.nextBestTests.length > 0 && (
+      {verdict.nextBestTest && (
         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
               <Zap size={14} /> Next Best Test (Value of Information)
             </span>
             <span className="text-xs bg-indigo-200 text-indigo-900 font-semibold px-2 py-0.5 rounded">
-              Cost: {verdict.nextBestTests[0].cost}
+              Cost: {verdict.nextBestTest.cost}
             </span>
           </div>
           <h4 className="font-semibold text-indigo-950 text-sm mb-1">
-            1. {verdict.nextBestTests[0].title}
+            1. {verdict.nextBestTest.title}
           </h4>
           <p className="text-xs text-indigo-800 mb-3">
-            {verdict.nextBestTests[0].description}
+            {verdict.nextBestTest.description}
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-            {verdict.nextBestTests[0].readingOutcomes.map((ro, i) => (
-              <div key={i} className="bg-white p-2 rounded border border-indigo-100 flex items-center justify-between">
-                <span className="text-slate-700">{ro.outcome}</span>
-                <ArrowRight size={12} className="text-indigo-500 shrink-0 mx-1" />
-                <span className="font-medium text-indigo-900 shrink-0">{ro.impliesMechanismId}</span>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 

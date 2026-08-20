@@ -36,16 +36,12 @@ export function getCohortAnalysis(axis: string, key: string): CohortAnalysisResu
     GROUP BY leading_cause
   `).all() as Array<{ leading_cause: string; cnt: number }>;
 
-  const baselines: Record<string, number> = {
-    "Terminal degradation": 12,
-    "Grid overvoltage": 22,
-    "SMPS defect": 31,
-    "No fault found": 15,
-    "Neutral open surge": 8,
-    "Relay contact weld": 6,
-    "Water ingress": 4,
-    "Tamper / HV spark": 2,
-  };
+  const baselines: Record<string, number> = {};
+  for (const row of baselineRows) {
+    if (row.leading_cause) {
+      baselines[row.leading_cause] = Math.round((row.cnt / totalAll) * 100);
+    }
+  }
 
   // Set default query condition by axis
   let whereClause = "sub_division = ?";
@@ -79,13 +75,7 @@ export function getCohortAnalysis(axis: string, key: string): CohortAnalysisResu
     }
   }
 
-  // If Lakhipur_bec, guarantee exact 27, 6, 3, 2 numbers
-  if (key === "Lakhipur_bec") {
-    causeCounts["Terminal degradation"] = 27;
-    causeCounts["Grid overvoltage"] = 6;
-    causeCounts["SMPS defect"] = 3;
-    causeCounts["No fault found"] = 2;
-  }
+
 
   const families: Record<string, string> = {
     "Terminal degradation": "INSTALLATION",
@@ -101,7 +91,7 @@ export function getCohortAnalysis(axis: string, key: string): CohortAnalysisResu
   const distribution: CohortDistributionItem[] = Object.entries(causeCounts)
     .map(([cause, count]) => {
       const pct = Math.round((count / totalCohort) * 100);
-      const basePct = baselines[cause] ?? 12;
+      const basePct = baselines[cause] ?? 1;
       const mult = Number((pct / Math.max(1, basePct)).toFixed(1));
       return {
         mechanismId: cause.toLowerCase().replace(/\s+/g, "-"),
@@ -111,7 +101,7 @@ export function getCohortAnalysis(axis: string, key: string): CohortAnalysisResu
         percentage: pct,
         baselinePercentage: basePct,
         multiplier: mult,
-        direction: mult >= 1.5 ? "elevated" : mult <= 0.7 ? "depressed" : "neutral",
+        direction: (mult >= 1.5 ? "elevated" : mult <= 0.7 ? "depressed" : "neutral") as "elevated" | "depressed" | "neutral",
       };
     })
     .sort((a, b) => b.count - a.count);
