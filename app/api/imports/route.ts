@@ -1,3 +1,4 @@
+import { getGovernanceAccess } from "@/app/lib/governance-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomUUID } from "node:crypto";
 import * as XLSX from "xlsx";
@@ -19,6 +20,9 @@ export interface ReconciliationRow {
 }
 
 export async function POST(request: NextRequest) {
+  const access = await getGovernanceAccess(request);
+  if (access.kind !== "authorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const db = getDb();
 
   let fileBuffer: Buffer;

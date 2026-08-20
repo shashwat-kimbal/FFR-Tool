@@ -1,10 +1,14 @@
+import { getGovernanceAccess } from "@/app/lib/governance-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/server/store/db.ts";
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  const access = await getGovernanceAccess(request);
+  if (access.kind !== "authorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const db = getDb();
   const { id } = await context.params;
 
@@ -21,7 +25,7 @@ export async function POST(
         product_family, sub_division, defect_date, field_observation,
         age_days, created_at
       ) VALUES (
-        ?, ?, ?, ?, 'open', 'SS', 'normal', ?, ?, ?, ?, 'METER', ?, ?, ?, 1, ?
+        ?, ?, ?, ?, 'open', ?, 'normal', ?, ?, ?, ?, 'METER', ?, ?, ?, 1, ?
       )
     `);
 
@@ -32,6 +36,7 @@ export async function POST(
           r.caseRef,
           importRow.sha256.substring(0, 16),
           r.rowNumber,
+          access.actor.email,
           r.meterOld,
           r.meterNew || null,
           r.complaintKey,

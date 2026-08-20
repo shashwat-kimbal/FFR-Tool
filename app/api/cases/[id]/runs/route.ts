@@ -1,3 +1,4 @@
+import { getGovernanceAccess } from "@/app/lib/governance-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -6,9 +7,12 @@ import { getDb, type CaseRow } from "@/server/store/db.ts";
 import { runFullAnalysisPipeline } from "@/server/inference/pipeline.ts";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  const access = await getGovernanceAccess(request);
+  if (access.kind !== "authorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const db = getDb();
   const { id } = await context.params;
 
@@ -31,9 +35,12 @@ export async function GET(
 }
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  const access = await getGovernanceAccess(request);
+  if (access.kind !== "authorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const db = getDb();
   const { id } = await context.params;
 
@@ -42,13 +49,18 @@ export async function POST(
     return NextResponse.json({ error: `Case ${id} not found` }, { status: 404 });
   }
 
-  // Load workbook from fixture
+  const evidenceRow = db.prepare("SELECT * FROM evidence WHERE case_id = ? AND kind = 'workbook' ORDER BY uploaded_at DESC LIMIT 1").get(id) as any;
+  if (!evidenceRow) {
+    return NextResponse.json({ error: "No primary DLMS evidence exists for this case" }, { status: 409 });
+  }
+
+  // Load workbook from storage
   let fileBuffer: Buffer;
   try {
-    const fixturePath = join(process.cwd(), "tests/fixtures/AS2373952_Reports_2026-06-30_16-07-28.xlsx");
-    fileBuffer = await readFile(fixturePath);
+    const storagePath = join(process.cwd(), ".evidence", evidenceRow.filename);
+    fileBuffer = await readFile(storagePath);
   } catch (err: any) {
-    return NextResponse.json({ error: `Could not load workbook: ${err.message}` }, { status: 500 });
+    return NextResponse.json({ error: `Could not load workbook from storage: ${err.message}` }, { status: 500 });
   }
 
   const pipelineResult = runFullAnalysisPipeline(
@@ -62,7 +74,7 @@ export async function POST(
       defectDate: caseRow.defect_date || undefined,
       fieldObservation: caseRow.field_observation || undefined,
     },
-    "AS2373952_Reports_2026-06-30.xlsx",
+    evidenceRow.filename,
   );
 
   if (!pipelineResult.success || !pipelineResult.verdict) {

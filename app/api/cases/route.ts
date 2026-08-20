@@ -1,7 +1,11 @@
+import { getGovernanceAccess } from "@/app/lib/governance-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type CaseRow } from "@/server/store/db.ts";
 
 export async function GET(request: NextRequest) {
+  const access = await getGovernanceAccess(request);
+  if (access.kind !== "authorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const db = getDb();
   const url = new URL(request.url);
 
@@ -27,7 +31,7 @@ export async function GET(request: NextRequest) {
 
   // Saved views filter
   if (view === "needs_me") {
-    conditions.push("(assignee_email = 'SS' AND status NOT IN ('closed'))");
+    conditions.push(`(assignee_email = '${access.actor.email}' AND status NOT IN ('closed'))`);
   } else if (view === "blocked_7d") {
     conditions.push("(status = 'blocked' AND age_days >= 7)");
   } else if (view === "high_conf_unadjudicated") {
@@ -73,7 +77,7 @@ export async function GET(request: NextRequest) {
   const rows = db.prepare(querySql).all(...params, limit, offset) as unknown as CaseRow[];
 
   // Global counts for the 4 summary pills
-  const statsNeedsMe = (db.prepare("SELECT COUNT(*) as c FROM cases WHERE assignee_email = 'SS' AND status != 'closed'").get() as { c: number }).c;
+  const statsNeedsMe = (db.prepare(`SELECT COUNT(*) as c FROM cases WHERE assignee_email = '${access.actor.email}' AND status != 'closed'`).get() as { c: number }).c;
   const statsBlocked = (db.prepare("SELECT COUNT(*) as c FROM cases WHERE status = 'blocked'").get() as { c: number }).c;
   const statsAwaitingReview = (db.prepare("SELECT COUNT(*) as c FROM cases WHERE status = 'in_review'").get() as { c: number }).c;
   const statsClosed = (db.prepare("SELECT COUNT(*) as c FROM cases WHERE status = 'closed'").get() as { c: number }).c;

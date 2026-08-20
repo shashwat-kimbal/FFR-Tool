@@ -1,3 +1,4 @@
+import { getGovernanceAccess } from "@/app/lib/governance-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomUUID } from "node:crypto";
 import * as XLSX from "xlsx";
@@ -12,6 +13,9 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  const access = await getGovernanceAccess(request);
+  if (access.kind !== "authorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const db = getDb();
   const { id } = await context.params;
 
@@ -41,6 +45,13 @@ export async function POST(
     }
     fileBuffer = Buffer.from(ab);
   }
+
+  // Save to local `.evidence` directory to act as storage for the mock
+  const fs = require("fs");
+  const path = require("path");
+  const storageDir = path.join(process.cwd(), ".evidence");
+  if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
+  fs.writeFileSync(path.join(storageDir, filename), fileBuffer);
 
   const sha256 = createHash("sha256").update(fileBuffer).digest("hex");
   const isImage = /\.(jpe?g|png|webp|bmp)$/i.test(filename);
@@ -117,7 +128,7 @@ export async function POST(
       id, case_id, kind, role, filename, sha256, size, storage_key,
       parse_summary_json, uploaded_by, uploaded_at
     ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SS', ?
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     )
   `).run(
     evidenceId,
@@ -129,6 +140,7 @@ export async function POST(
     fileBuffer.byteLength,
     `evidence/${filename}`,
     JSON.stringify(parseSummary),
+    access.actor.email,
     new Date().toISOString(),
   );
 

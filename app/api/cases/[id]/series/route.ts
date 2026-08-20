@@ -1,3 +1,4 @@
+import { getGovernanceAccess } from "@/app/lib/governance-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type CaseRow } from "@/server/store/db.ts";
 
@@ -5,6 +6,9 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  const access = await getGovernanceAccess(request);
+  if (access.kind !== "authorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const db = getDb();
   const { id } = await context.params;
   const url = new URL(request.url);

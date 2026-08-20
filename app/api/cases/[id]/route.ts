@@ -1,10 +1,14 @@
+import { getGovernanceAccess } from "@/app/lib/governance-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type CaseRow } from "@/server/store/db.ts";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  const access = await getGovernanceAccess(request);
+  if (access.kind !== "authorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const db = getDb();
   const { id } = await context.params;
 
@@ -46,18 +50,22 @@ export async function GET(
     }
   }
 
-  // Check for identity mismatch stop state
-  const isStopState = caseRow.status === "blocked" && (caseRow.blocked_reason?.includes("Identity mismatch") || false);
-  const stopStateDetails = isStopState
-    ? {
-        workbookSerial: "AS2373110",
+  let stopStateDetails = null;
+  if (caseRow.status === "blocked" && caseRow.blocked_reason?.includes("Identity mismatch")) {
+    const ev = db.prepare("SELECT * FROM evidence WHERE case_id = ? AND kind = 'workbook' ORDER BY uploaded_at DESC LIMIT 1").get(id) as any;
+    if (ev) {
+      let parsed = { meterSerial: "UNKNOWN" };
+      try { parsed = JSON.parse(ev.parse_summary_json); } catch {}
+      stopStateDetails = {
+        workbookSerial: parsed.meterSerial,
         expectedOld: caseRow.meter_old,
-        expectedNew: caseRow.meter_new || "SC10231275",
-        filename: "AS2373110_Reports_2026-06-30.xlsx",
-        sha256: "9b3ac41f0d4d5df289a74c2e6b8109d32fe4",
-        sizeBytes: 1245184,
-      }
-    : null;
+        expectedNew: caseRow.meter_new,
+        filename: ev.filename,
+        sha256: ev.sha256,
+        sizeBytes: ev.size,
+      };
+    }
+  }
 
   return NextResponse.json({
     case: caseRow,
@@ -67,7 +75,7 @@ export async function GET(
     })),
     runs: runsList,
     latestRun,
-    isStopState,
+    isStopState: stopStateDetails !== null,
     stopStateDetails,
   });
 }

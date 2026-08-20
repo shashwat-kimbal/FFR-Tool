@@ -1,10 +1,14 @@
+import { getGovernanceAccess } from "@/app/lib/governance-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { genericProvisionalBundle } from "@/server/rules/dlms-analysis.ts";
 
-// In-memory toggle state
-const ruleToggles: Record<string, boolean> = {};
+// In-memory toggle state for mock
+const ruleToggles = ((globalThis as any).__RULE_TOGGLES ||= {}) as Record<string, boolean>;
 
 export async function GET(request: NextRequest) {
+  const access = await getGovernanceAccess(request);
+  if (access.kind !== "authorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const url = new URL(request.url);
   const q = url.searchParams.get("q")?.toLowerCase();
   const group = url.searchParams.get("group");

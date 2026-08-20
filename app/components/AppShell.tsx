@@ -9,6 +9,7 @@ import {
   BookOpen,
   Menu,
   X,
+  User,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -32,7 +33,7 @@ export function AppShell({ children }: AppShellProps) {
     },
     {
       label: "Cohorts",
-      href: "/cohorts/feeder/Lakhipur_bec",
+      href: "/cohorts",
       icon: GitFork,
       active: pathname.startsWith("/cohorts"),
     },
@@ -62,7 +63,9 @@ export function AppShell({ children }: AppShellProps) {
             <span className="brand-text">KIMBAL</span>
           </div>
         </div>
-        <div className="user-chip-mobile">SS</div>
+        <div className="user-chip-mobile">
+          <User size={14} />
+        </div>
       </header>
 
       {/* Backdrop for Off-Canvas Drawer on < 1024px */}
@@ -102,10 +105,12 @@ export function AppShell({ children }: AppShellProps) {
         {/* Bottom User Chip */}
         <div className="rail-footer">
           <div className="rail-user-card">
-            <div className="user-avatar">SS</div>
+            <div className="user-avatar">
+              <User size={16} />
+            </div>
             <div className="user-details">
-              <div className="user-name">Shashwat S.</div>
-              <div className="user-role">Senior Analyst</div>
+              <div className="user-name">Analyst</div>
+              <div className="user-role">FFR</div>
             </div>
           </div>
         </div>
