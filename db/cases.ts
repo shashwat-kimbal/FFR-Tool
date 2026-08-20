@@ -291,6 +291,15 @@ export async function createCase(
   input: unknown,
 ): Promise<{ case: CaseRecord; meters: CaseMeterRecord[] }> {
   const parsed = validateCreateCaseInput(input);
+  
+  // Deduplication check: if a case with case_ref already exists, reopen it (F-02 fix)
+  const existing = await first<DbRow>(`SELECT ${CASE_COLUMNS} FROM cases WHERE case_ref = ? ORDER BY created_at DESC LIMIT 1`, [parsed.caseRef]);
+  if (existing) {
+    const existingCase = parseCaseRow(existing);
+    const meters = await getCaseMeters(existingCase.id);
+    return { case: existingCase, meters };
+  }
+
   const id = makeId();
   await execute(
     `INSERT INTO cases

@@ -10,9 +10,9 @@ const {
   extractAdapterIdentity,
   genericProvisionalBundle,
   inspectAdapterWorkbookStructure,
-} = await import("../app/lib/dlms-analysis.ts");
+} = await import("../server/rules/dlms-analysis.ts");
 const { evaluateGovernedExpression } = await import(
-  "../app/lib/rule-engine.ts"
+  "../server/rules/rule-engine.ts"
 );
 
 async function fixtureWorkbook() {

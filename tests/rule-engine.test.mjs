@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-const { evaluateRules, ruleInputGaps } = await import("../app/lib/rule-engine.ts");
+const { evaluateRules, ruleInputGaps } = await import("../server/rules/rule-engine.ts");
 
 function completeRule(overrides = {}) {
   return {

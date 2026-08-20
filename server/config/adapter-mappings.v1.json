@@ -1,0 +1,25 @@
+{
+  "configId": "kimbal-dlms-adapter-mappings",
+  "version": "1.0.0",
+  "status": "provisional_configurable",
+  "mappings": [
+    {
+      "productFamily": "METER",
+      "adapterId": "bcs-16-sheet-v1",
+      "evidenceMode": "direct",
+      "description": "The BCS/DLMS 16-sheet adapter reads Meter configuration, profile, and event evidence directly."
+    },
+    {
+      "productFamily": "NIC",
+      "adapterId": "bcs-16-sheet-v1",
+      "evidenceMode": "context_only",
+      "description": "Meter DLMS electrical evidence is contextual only until a dedicated NIC adapter and feature map are approved."
+    },
+    {
+      "productFamily": "GATEWAY",
+      "adapterId": "bcs-16-sheet-v1",
+      "evidenceMode": "context_only",
+      "description": "Meter DLMS electrical evidence is contextual only until a dedicated Gateway adapter and feature map are approved."
+    }
+  ]
+}

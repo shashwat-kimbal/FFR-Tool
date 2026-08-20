@@ -10,7 +10,9 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# database
+/.data/
+.data/
 /coverage
 
 # next.js

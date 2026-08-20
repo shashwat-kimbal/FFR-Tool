@@ -1,0 +1,124 @@
+{
+  "contractId": "kimbal-ffr-file-first-pilot",
+  "version": "1.0.0",
+  "status": "draft_for_domain_review",
+  "ffrRegister": {
+    "sheetSelection": {
+      "strategy": "first_sheet_matching_required_headers",
+      "sampleSheet": "Sheet1"
+    },
+    "headerRow": 1,
+    "requiredHeaders": [
+      "S.No",
+      "Old_Meter_Number",
+      "New_Meter_Number",
+      "Meter type",
+      "Old_Meter_Type",
+      "Defect Trigger",
+      "Symptoms of the problem New",
+      "Field Observation",
+      "Field Person visit Observation Report",
+      "Initial Observation at KIMBAL",
+      "Root Cause Analysis Details from Kimbal",
+      "Correction by KIMBAL",
+      "Corrective Action",
+      "CAPA No.",
+      "Status Of CAPA"
+    ],
+    "headerNormalization": {
+      "trim": true,
+      "collapseWhitespace": true,
+      "caseInsensitive": true,
+      "rejectDuplicateNormalizedHeaders": true
+    },
+    "identityMatch": {
+      "fieldsInOrder": ["Old_Meter_Number", "New_Meter_Number"],
+      "requireExactlyOneMatch": true,
+      "fuzzyMatch": false
+    },
+    "productFamilyInputs": ["Meter type", "Old_Meter_Type"],
+    "complaintInputsInOrder": [
+      "Defect Trigger",
+      "Symptoms of the problem New",
+      "Field Observation",
+      "Field Person visit Observation Report"
+    ],
+    "writeBack": {
+      "preserveOriginal": true,
+      "outputNameSuffix": "_Kimbal_Analyzed_<timestamp>",
+      "fields": [
+        {
+          "sampleColumn": "Z",
+          "header": "Initial Observation at KIMBAL",
+          "content": "factual_observation_summary"
+        },
+        {
+          "sampleColumn": "AA",
+          "header": "Root Cause Analysis Details from Kimbal",
+          "content": "draft_rca_summary"
+        },
+        {
+          "sampleColumn": "AB",
+          "header": "Correction by KIMBAL",
+          "content": "draft_case_correction"
+        },
+        {
+          "sampleColumn": "AC",
+          "header": "Corrective Action",
+          "content": "draft_corrective_action"
+        },
+        {
+          "sampleColumn": "AD",
+          "header": "CAPA No.",
+          "content": "generated_pilot_capa_id"
+        },
+        {
+          "sampleColumn": "AE",
+          "header": "Status Of CAPA",
+          "content": "literal:Draft - review required"
+        }
+      ],
+      "prohibitedFields": [
+        "Fault Responsible",
+        "Sent to Kimbal",
+        "Date of Defective Meter Sent To KIMBAL",
+        "Receipt at KIMBAL ( material and Detail file)",
+        "Replacement Status",
+        "Date of Defective Meter Replacement",
+        "Replacment Status"
+      ]
+    }
+  },
+  "dlmsWorkbook": {
+    "identity": {
+      "sheet": "MeterConfiguration",
+      "object": "0.0.96.1.0.255",
+      "label": "Meter serial number"
+    },
+    "mandatorySheets": [
+      "MeterConfiguration",
+      "SelfDiagnostic",
+      "IP"
+    ],
+    "expectedSheets": [
+      "Active Season Profile",
+      "Passive Season Profile",
+      "MeterConfiguration",
+      "SelfDiagnostic",
+      "IP",
+      "BillingProfile",
+      "BlockLoadProfile",
+      "DailyLoadProfile",
+      "BillingConsumption",
+      "DailyLoadConsumption",
+      "CurrentRelatedEvent",
+      "OtherEvent",
+      "ControlEvent",
+      "PowerRelatedEvent",
+      "TransactionEvent",
+      "VoltageRelatedEvent"
+    ],
+    "allowEmptyEventSheets": true,
+    "preserveRawWorkbook": true
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "configId": "kimbal-ffr-case-display",
+  "version": "1.0.0",
+  "groups": [
+    {
+      "id": "case_context",
+      "title": "Case context",
+      "fields": ["S.No", "Sub-Division", "Date Of Defect", "Defective stage", "MIS (IC) nos. of Month"]
+    },
+    {
+      "id": "asset_context",
+      "title": "Asset and replacement context",
+      "fields": ["Old_Meter_Number", "New_Meter_Number", "Meter type", "Old_Meter_Type", "Meter_Make", "Old_Meter_MI_Date", "Date of Replacement"]
+    },
+    {
+      "id": "complaint_context",
+      "title": "Reported fault context",
+      "fields": ["Defect Trigger", "Symptoms of the problem New", "Field Observation", "Field Person visit Observation Report", "Fault Responsible"]
+    },
+    {
+      "id": "field_logistics",
+      "title": "Field and logistics context",
+      "fields": ["Sent to Kimbal", "In Case Repaire at Site- Fill Details of Repaire", "Date of Defective Meter Sent To KIMBAL", "Currier Details for Tracking Purpose", "Replacement Status", "Date of Defective Meter Replacement", "Old_Meter_Last_Communication_date", "Receipt at KIMBAL ( material and Detail file)"]
+    },
+    {
+      "id": "existing_resolution",
+      "title": "Existing Kimbal and CAPA fields",
+      "fields": ["Initial Observation at KIMBAL", "Root Cause Analysis Details from Kimbal", "Correction by KIMBAL", "Corrective Action", "CAPA No.", "Status Of CAPA", "Replacment Status"]
+    }
+  ]
+}

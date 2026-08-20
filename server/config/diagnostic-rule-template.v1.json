@@ -1,0 +1,27 @@
+{
+  "id": "PRODUCT-COMPLAINT-SIGNAL-NNN",
+  "version": "0.1.0",
+  "title": "Replace with a concise engineering rule name",
+  "purpose": "Explain the failure question this rule helps answer",
+  "status": "draft",
+  "productFamilies": ["METER"],
+  "complaintKeys": ["METER:F:F1"],
+  "requiredFeatures": ["self_diagnostic.main_battery"],
+  "conditions": [
+    {
+      "feature": "self_diagnostic.main_battery",
+      "operator": "equals",
+      "value": "false"
+    }
+  ],
+  "hypothesisCode": "BATTERY_DOMAIN_FAILURE",
+  "hypothesisLabel": "Battery-domain failure",
+  "weight": 20,
+  "requiredFollowUp": "Image view: METER_DISPLAY_SUPPLY_MODE",
+  "allowedOutcome": "PROBABLE",
+  "limitation": "Never confirm without manual or direct physical validation.",
+  "analystExplanation": "Explain what matched, what the rule supports and what it cannot prove.",
+  "reportSafeExplanation": "Explain the finding without model scores or unsupported component claims.",
+  "owner": "Unassigned",
+  "reviewer": "Unassigned"
+}

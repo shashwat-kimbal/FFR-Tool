@@ -1,0 +1,27 @@
+{
+  "id": "bcs-16-sheet-v1",
+  "version": "1.0.0",
+  "title": "BCS/DLMS 16-sheet workbook",
+  "mandatorySheets": [
+    "MeterConfiguration",
+    "SelfDiagnostic",
+    "IP"
+  ],
+  "optionalSheets": [
+    "Active Season Profile",
+    "Passive Season Profile",
+    "BillingProfile",
+    "BlockLoadProfile",
+    "DailyLoadProfile",
+    "BillingConsumption",
+    "DailyLoadConsumption",
+    "CurrentRelatedEvent",
+    "OtherEvent",
+    "ControlEvent",
+    "PowerRelatedEvent",
+    "TransactionEvent",
+    "VoltageRelatedEvent"
+  ],
+  "identitySheet": "MeterConfiguration",
+  "identityHeader": "Meter Serial Number"
+}

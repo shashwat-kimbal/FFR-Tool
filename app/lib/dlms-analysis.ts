@@ -2,6 +2,17 @@ import * as XLSX from "xlsx";
 import bcs16AdapterSeed from "../../config/dlms-adapter-bcs-16-sheet.v1.json" with { type: "json" };
 import provisionalProfileSeed from "../../config/dlms-provisional-profile.v1.json" with { type: "json" };
 import genericProvisionalSeed from "../../rules/bundles/generic-provisional-v1.json" with { type: "json" };
+import {
+  analyzeCensoredStream,
+  analyzeTruncation,
+  analyzeDose,
+  analyzeCoincidence,
+  analyzeDecoupling,
+  analyzeTestimonyConflict,
+  reconstructStory,
+  type FirstPrinciplesPatterns,
+} from "./first-principles-patterns.ts";
+import { evaluateVerdict, type VerdictObject } from "./verdict-engine.ts";
 
 /**
  * The analysis library intentionally keeps rule content as serializable data.
@@ -195,6 +206,10 @@ export interface DlmsAnalysis {
     attention: number;
     notAssessed: number;
     high: number;
+  };
+  firstPrinciples?: {
+    patterns: FirstPrinciplesPatterns;
+    verdict: VerdictObject;
   };
 }
 
@@ -1569,6 +1584,90 @@ export function analyzeDlmsWorkbook(
       contextOnly,
     };
   });
+
+  // Extract L0 series & events for L2 Pattern Engine & L4/L5 First Principles Inference
+  const blockSheetName = workbookSheetName(workbook, adapterSheet(adapter, "blockLoadProfile")) ?? "BlockLoadProfile";
+  const blockRows = rowsFor(workbook, blockSheetName);
+  const rtcHeader = findHeaderColumn(blockRows, adapterHeaders(adapter, "profileTimestamp"));
+  
+  let profileRecords: Array<{ timestamp: unknown; voltage: number; current: number }> = [];
+  let timestamps: unknown[] = [];
+  let voltages: number[] = [];
+  let currents: number[] = [];
+  let importEnergies: number[] = [];
+
+  if (rtcHeader) {
+    const headers = blockRows[rtcHeader.row].map((v) => normalise(v));
+    const dataRows = blockRows.slice(rtcHeader.row + 1).filter((row) => row.some((v) => String(v ?? "").trim()));
+    const vCol = headers.findIndex((h) => h.includes("VOLTAGE"));
+    const iCol = headers.findIndex((h) => h.includes("CURRENT"));
+    const eCol = headers.findIndex((h) => h.includes("IMPORT ACTIVE ENERGY") || h.includes("CUMULATIVE IMPORT"));
+
+    dataRows.forEach((r) => {
+      const ts = r[rtcHeader.column];
+      const v = numeric(r[vCol]) ?? 0;
+      const i = numeric(r[iCol]) ?? 0;
+      const e = numeric(r[eCol]) ?? 0;
+      timestamps.push(ts);
+      voltages.push(v);
+      currents.push(i);
+      importEnergies.push(e);
+      profileRecords.push({ timestamp: ts, voltage: v, current: i });
+    });
+  }
+
+  const getSheetTimestamps = (role: AdapterSheetRole) => {
+    const sName = workbookSheetName(workbook, adapterSheet(adapter, role));
+    if (!sName) return [];
+    const rows = rowsFor(workbook, sName);
+    return rows.slice(1).map((r) => r[1] ?? r[0]).filter(Boolean);
+  };
+
+  const currTs = getSheetTimestamps("currentEvent");
+  const voltTs = getSheetTimestamps("voltageEvent");
+  const powTs = getSheetTimestamps("powerEvent");
+  const othTs = getSheetTimestamps("otherEvent");
+
+  const censoredCurr = analyzeCensoredStream("CurrentRelatedEvent", currTs.length, currTs);
+  const censoredVolt = analyzeCensoredStream("VoltageRelatedEvent", voltTs.length, voltTs);
+  const censoredPower = analyzeCensoredStream("PowerRelatedEvent", powTs.length, powTs);
+  const censoredOther = analyzeCensoredStream("OtherEvent", othTs.length, othTs);
+
+  const truncation = analyzeTruncation(profileRecords, complaintKey);
+  const dose = analyzeDose(voltages, timestamps, effective.profile.parameters.voltage_warning_upper_v ?? 253, effective.profile.parameters.voltage_warning_lower_v ?? 207);
+
+  const allEvents = [
+    ...currTs.map((ts) => ({ stream: "CurrentRelatedEvent", timestamp: ts })),
+    ...voltTs.map((ts) => ({ stream: "VoltageRelatedEvent", timestamp: ts })),
+    ...powTs.map((ts) => ({ stream: "PowerRelatedEvent", timestamp: ts })),
+    ...othTs.map((ts) => ({ stream: "OtherEvent", timestamp: ts })),
+  ];
+
+  const coincidence = analyzeCoincidence(allEvents, truncation.lastLiveTs, 24);
+  const decoupling = analyzeDecoupling(voltages, currents, importEnergies, timestamps);
+  const testimonyConflict = analyzeTestimonyConflict("METER_BURNT", complaintKey, truncation, dose);
+
+  const censoredStreamsMap = {
+    currentEvent: censoredCurr,
+    voltageEvent: censoredVolt,
+    powerEvent: censoredPower,
+    otherEvent: censoredOther,
+  };
+
+  const story = reconstructStory(truncation, dose, censoredStreamsMap, coincidence);
+
+  const patterns: FirstPrinciplesPatterns = {
+    censoredStreams: censoredStreamsMap,
+    truncation,
+    coincidence,
+    dose,
+    decoupling,
+    testimonyConflict,
+    reconstructedStory: story,
+  };
+
+  const verdict = evaluateVerdict(patterns, effective.sources, adapter.id);
+
   return {
     bundle: {
       id: configuredBundle.id,
@@ -1626,6 +1725,10 @@ export function analyzeDlmsWorkbook(
         (finding) =>
           finding.status === "attention" && finding.severity === "high",
       ).length,
+    },
+    firstPrinciples: {
+      patterns,
+      verdict,
     },
   };
 }
